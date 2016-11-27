@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.6)
 project(CI_Homework_2)
 
 #Flags for the specified for the homework
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3 -DNDEBUG -g -static -std=c99 -pipe -lm")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -DNDEBUG -g -static -std=c99 -pipe -lm")
 
 set(SOURCE_FILES
     LICENSE
