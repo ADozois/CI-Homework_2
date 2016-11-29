@@ -35,4 +35,3 @@
 #Project requirement
 .idea/
 *.txt
-cmake-build-debug/
