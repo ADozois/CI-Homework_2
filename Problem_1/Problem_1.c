@@ -159,7 +159,7 @@ void weightUpdate(Neuron* neuron, Data* data){
 }
 
 double sigmoidFunc(double input){
-  return 1.0/(1 + exp(input));
+  return 1.0/(1 + exp((-1)*input));
 }
 
 double linearFunc(Neuron *neuron, double input1, double input2) {
