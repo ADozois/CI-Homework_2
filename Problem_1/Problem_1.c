@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+
+#define WEIGHT_MAX 0.000001
 
 
 typedef struct Neuron Neuron;
@@ -10,8 +14,8 @@ typedef void (*functionPtr)(Neuron);
 
 
 struct Neuron {
-  double Input1;
-  double Input2;
+  double Weight1;
+  double Weight2;
   functionPtr Func;
   int Outpout;
 };
@@ -29,10 +33,19 @@ void parseTrainingLine(char *line, Data *data);
 
 void parseTestLine(char *line, Data *data);
 
+void initialiseNeuron(Neuron* neuron);
+
+double linearFunc(Neuron *neuron, double input1, double input2);
+
 
 int main(void) {
   char *path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_1/testInput10A.txt";
   Data training[1000], test[100];
+  Neuron my_neuron;
+  srand((unsigned)time(NULL)); //See initialisation
+
+  initialiseNeuron(&my_neuron);
+
   parseFile(path, training, test);
 
   return 0;
@@ -97,3 +110,15 @@ void parseTestLine(char *line, Data *data){
   data->Input2 = strtod(token[1], NULL);
   data->class = 0;
 }
+
+void initialiseNeuron(Neuron *neuron){
+  neuron->Outpout = 0;
+  neuron->Weight1 = ((double)rand()/(double)(RAND_MAX))*WEIGHT_MAX;
+  neuron->Weight2 = ((double)rand()/(double)(RAND_MAX))*WEIGHT_MAX;
+  neuron->Func = NULL;
+}
+
+double linearFunc(Neuron *neuron, double input1, double input2){
+  return 0.0;
+}
+
