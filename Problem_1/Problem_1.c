@@ -15,6 +15,7 @@ typedef double (*functionPtr)(Neuron, double);
 struct Neuron {
   double Weight1;
   double Weight2;
+  double Weight3;
   functionPtr Func;
   int Outpout;
 };
@@ -35,9 +36,15 @@ void initialiseNeuron(Neuron *neuron);
 
 double computeActivation(Neuron *neuron, double input1, double input2);
 
-double error(Neuron* neuron, int value);
+double error(Neuron *neuron, int value);
 
-double gradient(Neuron* neuron, int value);
+double gradient(Neuron *neuron, int value);
+
+double gradientSigmoid(double input);
+
+void weightUpdate(Neuron* neuron, Data* data);
+
+double sigmoidFunc(double input);
 
 double linearFunc(Neuron *neuron, double input1, double input2);
 
@@ -125,15 +132,34 @@ void initialiseNeuron(Neuron *neuron) {
   neuron->Outpout = 0;
   neuron->Weight1 = ((double) rand() / (double) (RAND_MAX)) * WEIGHT_MAX;
   neuron->Weight2 = ((double) rand() / (double) (RAND_MAX)) * WEIGHT_MAX;
+  neuron->Weight3 = ((double) rand() / (double) (RAND_MAX)) * WEIGHT_MAX;
   neuron->Func = NULL;
 }
 
-double error(Neuron* neuron, int value){
+double error(Neuron *neuron, int value) {
   double error = 0.0, diff;
-  diff = (double)(neuron->Outpout - value);
+  diff = (double) (neuron->Outpout - value);
   //error = pow(diff, 2.0);
-  error = diff*diff;
+  error = diff * diff;
   return error;
+}
+
+double gradient(Neuron *neuron, int value){
+  return 0.0;
+}
+
+double gradientSigmoid(double input){
+  return sigmoidFunc(input)*(1-sigmoidFunc(input));
+}
+
+void weightUpdate(Neuron* neuron, Data* data){
+  neuron->Weight1 = neuron->Weight1 + LEARNING_WEIGHT*(gradient(neuron,data->class))*data->Input1;
+  neuron->Weight2 = neuron->Weight2 + LEARNING_WEIGHT*(gradient(neuron,data->class))*data->Input2;
+  neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT*(gradient(neuron,data->class))*1.0;
+}
+
+double sigmoidFunc(double input){
+  return 1.0/(1 + exp(input));
 }
 
 double linearFunc(Neuron *neuron, double input1, double input2) {
