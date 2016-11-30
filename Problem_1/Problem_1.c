@@ -10,7 +10,7 @@
 
 typedef struct Neuron Neuron;
 typedef struct Data Data;
-typedef double (*functionPtr)(Neuron, double);
+typedef double (*functionPtr)(double);
 
 struct Neuron {
   double Weight1;
@@ -23,6 +23,7 @@ struct Neuron {
 struct Data {
   double Input1;
   double Input2;
+  int size;
   int class;
 };
 
@@ -82,6 +83,8 @@ void parseFile(char *path, Data *training, Data *test) {
         }
       }
     }
+    training[0].size = i;
+    test[0].size = j;
   } else {
     printf("Can't open file");
   }
@@ -124,8 +127,8 @@ void parseTestLine(char *line, Data *data) {
 double computeActivation(Neuron *neuron, double input1, double input2) {
   double sum = 0.0;
 
-  sum = neuron->Func((*neuron), input1) + neuron->Func((*neuron), input2);
-  return sum;
+  sum = neuron->Weight1*input1 + neuron->Weight2*input2 + neuron->Weight3;
+  return neuron->Func(sum);
 }
 
 void initialiseNeuron(Neuron *neuron) {
