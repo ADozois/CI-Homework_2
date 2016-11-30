@@ -139,8 +139,7 @@ void initialiseNeuron(Neuron *neuron) {
 double error(Neuron *neuron, int value) {
   double error = 0.0, diff;
   diff = (double) (neuron->Outpout - value);
-  //error = pow(diff, 2.0);
-  error = diff * diff;
+  error = pow(diff, 2.0);
   return error;
 }
 
