@@ -150,6 +150,33 @@ Problem_1/Problem_1.c.s:
 	$(MAKE) -f CMakeFiles/CI_Homework_2.dir/build.make CMakeFiles/CI_Homework_2.dir/Problem_1/Problem_1.c.s
 .PHONY : Problem_1/Problem_1.c.s
 
+Problem_2/Problem_2.o: Problem_2/Problem_2.c.o
+
+.PHONY : Problem_2/Problem_2.o
+
+# target to build an object file
+Problem_2/Problem_2.c.o:
+	$(MAKE) -f CMakeFiles/CI_Homework_2.dir/build.make CMakeFiles/CI_Homework_2.dir/Problem_2/Problem_2.c.o
+.PHONY : Problem_2/Problem_2.c.o
+
+Problem_2/Problem_2.i: Problem_2/Problem_2.c.i
+
+.PHONY : Problem_2/Problem_2.i
+
+# target to preprocess a source file
+Problem_2/Problem_2.c.i:
+	$(MAKE) -f CMakeFiles/CI_Homework_2.dir/build.make CMakeFiles/CI_Homework_2.dir/Problem_2/Problem_2.c.i
+.PHONY : Problem_2/Problem_2.c.i
+
+Problem_2/Problem_2.s: Problem_2/Problem_2.c.s
+
+.PHONY : Problem_2/Problem_2.s
+
+# target to generate assembly for a file
+Problem_2/Problem_2.c.s:
+	$(MAKE) -f CMakeFiles/CI_Homework_2.dir/build.make CMakeFiles/CI_Homework_2.dir/Problem_2/Problem_2.c.s
+.PHONY : Problem_2/Problem_2.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -162,6 +189,9 @@ help:
 	@echo "... Problem_1/Problem_1.o"
 	@echo "... Problem_1/Problem_1.i"
 	@echo "... Problem_1/Problem_1.s"
+	@echo "... Problem_2/Problem_2.o"
+	@echo "... Problem_2/Problem_2.i"
+	@echo "... Problem_2/Problem_2.s"
 .PHONY : help
 
 

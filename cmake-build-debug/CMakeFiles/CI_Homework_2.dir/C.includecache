@@ -18,3 +18,15 @@ time.h
 math.h
 -
 
+/home/gemini/TUM/CI/CI-Homework_2/Problem_2/Problem_2.c
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+time.h
+-
+math.h
+-
+

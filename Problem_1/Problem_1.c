@@ -46,17 +46,23 @@ double gradient(Neuron *neuron, int value);
 
 double gradientSigmoid(double input);
 
-void weightUpdate(Neuron* neuron, Data* data);
+void weightUpdate(Neuron *neuron, Data *data);
 
 double sigmoidFunc(double input);
 
-void trainNeuron(Neuron* neuron, Data* training);
+void trainNeuron(Neuron *neuron, Data *training);
 
 int classify(double value);
 
 double linearFunc(double value);
 
 void createLogFile(void);
+
+void normailzeData(Data *training, Data *test);
+
+double minInData(Data *data);
+
+double maxInData(Data *data);
 
 int main(void) {
   char *path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_1/testInput10A.txt";
@@ -67,6 +73,8 @@ int main(void) {
   initialiseNeuron(&my_neuron);
   my_neuron.Func = &linearFunc;
   parseFile(path, training, test);
+
+  normailzeData(training, test);
 
   trainNeuron(&my_neuron, training);
 
@@ -138,7 +146,7 @@ void parseTestLine(char *line, Data *data) {
 int computeActivation(Neuron *neuron, double input1, double input2) {
   double sum = 0.0;
 
-  sum = neuron->Weight1*input1 + neuron->Weight2*input2 + neuron->Weight3;
+  sum = neuron->Weight1 * input1 + neuron->Weight2 * input2 + neuron->Weight3;
   neuron->Outpout = classify(sum);
   return neuron->Outpout;
 }
@@ -158,48 +166,98 @@ double error(Neuron *neuron, int value) {
   return error;
 }
 
-double gradient(Neuron *neuron, int value){
+double gradient(Neuron *neuron, int value) {
   return 0.0;
 }
 
-double gradientSigmoid(double input){
-  return sigmoidFunc(input)*(1-sigmoidFunc(input));
+double gradientSigmoid(double input) {
+  return sigmoidFunc(input) * (1 - sigmoidFunc(input));
 }
 
-void weightUpdate(Neuron* neuron, Data* data){
-  neuron->Weight1 = neuron->Weight1 + LEARNING_WEIGHT*(gradient(neuron,data->class))*data->Input1;
-  neuron->Weight2 = neuron->Weight2 + LEARNING_WEIGHT*(gradient(neuron,data->class))*data->Input2;
-  neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT*(gradient(neuron,data->class));
+void weightUpdate(Neuron *neuron, Data *data) {
+  neuron->Weight1 = neuron->Weight1 + LEARNING_WEIGHT * (gradient(neuron, data->class)) * data->Input1;
+  neuron->Weight2 = neuron->Weight2 + LEARNING_WEIGHT * (gradient(neuron, data->class)) * data->Input2;
+  neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT * (gradient(neuron, data->class));
 }
 
-double sigmoidFunc(double input){
-  return 1.0/(1 + exp((-1)*input));
+double sigmoidFunc(double input) {
+  return 1.0 / (1 + exp((-1) * input));
 }
 
-void trainNeuron(Neuron* neuron, Data* training){
+void trainNeuron(Neuron *neuron, Data *training) {
   int result = 0;
   double err = 0.0;
 
   for (int i = 0; i < training[0].size; ++i) {
-    result = computeActivation(neuron,training[i].Input1,training[i].Input2);
-    err = error(neuron,result);
+    result = computeActivation(neuron, training[i].Input1, training[i].Input2);
+    err = error(neuron, result);
     printf("%f\n", err);
-    weightUpdate(neuron,training);
+    weightUpdate(neuron, training);
   }
 }
-int classify(double value){
-  return (value > THRESHOLD)? 1 : -1;
+int classify(double value) {
+  return (value > THRESHOLD) ? 1 : -1;
 }
 
 double linearFunc(double value) {
   return value;
 }
 
-void createLogFile(void){
-  char* path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_1/log.txt";
+void createLogFile(void) {
+  char *path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_1/log.txt";
 
-  file_log = fopen(path,"w");
-  if(!file_log){
+  file_log = fopen(path, "w");
+  if (!file_log) {
     printf("Cannot create log file");
   }
 }
+
+void normailzeData(Data *training, Data *test) {
+  double min, max, tmp;
+
+  min = minInData(training);
+  max = maxInData(training);
+
+  tmp = minInData(test);
+  if (tmp < min)
+    min = tmp;
+  tmp = maxInData(test);
+  if (tmp > max)
+    max = tmp;
+
+  for (int j = 0; j < training[0].size; ++j) {
+    training[j].Input1 = 2 * (training[j].Input1 - min) / (max - min) - 1;
+    training[j].Input2 = 2 * (training[j].Input2 - min) / (max - min) - 1;
+    if (j < test[0].size) {
+      test[j].Input1 = 2 * (test[j].Input1 - min) / (max - min) - 1;
+      test[j].Input2 = 2 * (test[j].Input2 - min) / (max - min) - 1;
+    }
+  }
+}
+
+double minInData(Data *data) {
+  double min = data[0].Input1;
+
+  for (int i = 0; i < data[0].size; ++i) {
+    if (data[i].Input1 < min)
+      min = data[i].Input1;
+    if (data[i].Input2 < min)
+      min = data[i].Input2;
+  }
+
+  return min;
+}
+
+double maxInData(Data *data) {
+  double max = data[0].Input1;
+
+  for (int i = 0; i < data[0].size; ++i) {
+    if (data[i].Input1 > max)
+      max = data[i].Input1;
+    if (data[i].Input2 > max)
+      max = data[i].Input2;
+  }
+
+  return max;
+}
+
