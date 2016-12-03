@@ -71,7 +71,7 @@ int main(void) {
   srand((unsigned) time(NULL)); //See initialisation
 
   initialiseNeuron(&my_neuron);
-  my_neuron.Func = &linearFunc;
+  my_neuron.Func = &tanhFunc;
   parseFile(path, training, test);
 
   normailzeData(training, test);
