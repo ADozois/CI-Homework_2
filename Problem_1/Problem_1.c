@@ -44,17 +44,17 @@ double error(Neuron *neuron, int value);
 
 double gradient(Neuron *neuron, int value);
 
-double gradientSigmoid(double input);
+double gradientTanh(double input);
 
 void weightUpdate(Neuron *neuron, Data *data);
 
-double sigmoidFunc(double input);
+double tanhFunc(double input);
+
+double linearFunc(double value);
 
 void trainNeuron(Neuron *neuron, Data *training);
 
 int classify(double value);
-
-double linearFunc(double value);
 
 void createLogFile(void);
 
@@ -170,8 +170,8 @@ double gradient(Neuron *neuron, int value) {
   return 0.0;
 }
 
-double gradientSigmoid(double input) {
-  return sigmoidFunc(input) * (1 - sigmoidFunc(input));
+double gradientTanh(double input) {
+  return (1 - pow(tanhFunc(input),2));
 }
 
 void weightUpdate(Neuron *neuron, Data *data) {
@@ -180,8 +180,8 @@ void weightUpdate(Neuron *neuron, Data *data) {
   neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT * (gradient(neuron, data->class));
 }
 
-double sigmoidFunc(double input) {
-  return 1.0 / (1 + exp((-1) * input));
+double tanhFunc(double input) {
+  return (exp(input) - exp((-1)*input)) / (exp(input) + exp((-1) * input));
 }
 
 void trainNeuron(Neuron *neuron, Data *training) {
