@@ -7,6 +7,7 @@
 
 #define WEIGHT_MAX 0.000001
 #define LEARNING_WEIGHT 0.0001
+#define THRESHOLD 0
 
 typedef struct Neuron Neuron;
 typedef struct Data Data;
@@ -27,6 +28,8 @@ struct Data {
   int class;
 };
 
+FILE *file_log;
+
 void parseFile(char *file, Data *training, Data *test);
 
 void parseTrainingLine(char *line, Data *data);
@@ -35,7 +38,7 @@ void parseTestLine(char *line, Data *data);
 
 void initialiseNeuron(Neuron *neuron);
 
-double computeActivation(Neuron *neuron, double input1, double input2);
+int computeActivation(Neuron *neuron, double input1, double input2);
 
 double error(Neuron *neuron, int value);
 
@@ -47,7 +50,13 @@ void weightUpdate(Neuron* neuron, Data* data);
 
 double sigmoidFunc(double input);
 
-double linearFunc(Neuron *neuron, double input1, double input2);
+void trainNeuron(Neuron* neuron, Data* training);
+
+int classify(double value);
+
+double linearFunc(double value);
+
+void createLogFile(void);
 
 int main(void) {
   char *path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_1/testInput10A.txt";
@@ -56,8 +65,10 @@ int main(void) {
   srand((unsigned) time(NULL)); //See initialisation
 
   initialiseNeuron(&my_neuron);
-
+  my_neuron.Func = &linearFunc;
   parseFile(path, training, test);
+
+  trainNeuron(&my_neuron, training);
 
   return 0;
 }
@@ -124,11 +135,12 @@ void parseTestLine(char *line, Data *data) {
   data->class = 0;
 }
 
-double computeActivation(Neuron *neuron, double input1, double input2) {
+int computeActivation(Neuron *neuron, double input1, double input2) {
   double sum = 0.0;
 
   sum = neuron->Weight1*input1 + neuron->Weight2*input2 + neuron->Weight3;
-  return neuron->Func(sum);
+  neuron->Outpout = classify(sum);
+  return neuron->Outpout;
 }
 
 void initialiseNeuron(Neuron *neuron) {
@@ -157,14 +169,37 @@ double gradientSigmoid(double input){
 void weightUpdate(Neuron* neuron, Data* data){
   neuron->Weight1 = neuron->Weight1 + LEARNING_WEIGHT*(gradient(neuron,data->class))*data->Input1;
   neuron->Weight2 = neuron->Weight2 + LEARNING_WEIGHT*(gradient(neuron,data->class))*data->Input2;
-  neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT*(gradient(neuron,data->class))*1.0;
+  neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT*(gradient(neuron,data->class));
 }
 
 double sigmoidFunc(double input){
   return 1.0/(1 + exp((-1)*input));
 }
 
-double linearFunc(Neuron *neuron, double input1, double input2) {
-  return 0.0;
+void trainNeuron(Neuron* neuron, Data* training){
+  int result = 0;
+  double err = 0.0;
+
+  for (int i = 0; i < training[0].size; ++i) {
+    result = computeActivation(neuron,training[i].Input1,training[i].Input2);
+    err = error(neuron,result);
+    printf("%f\n", err);
+    weightUpdate(neuron,training);
+  }
+}
+int classify(double value){
+  return (value > THRESHOLD)? 1 : -1;
 }
 
+double linearFunc(double value) {
+  return value;
+}
+
+void createLogFile(void){
+  char* path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_1/log.txt";
+
+  file_log = fopen(path,"w");
+  if(!file_log){
+    printf("Cannot create log file");
+  }
+}
