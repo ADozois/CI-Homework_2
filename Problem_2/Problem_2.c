@@ -27,7 +27,7 @@ struct Data {
   int size;
   int class;
 };
-
+/*
 void parseFile(char *file, Data *training, Data *test);
 
 void parseTrainingLine(char *line, Data *data);
@@ -130,3 +130,4 @@ double error(Neuron *neuron, int value) {
   error = pow(diff, 2.0);
   return error;
 }
+*/
