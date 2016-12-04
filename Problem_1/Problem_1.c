@@ -58,11 +58,13 @@ int classify(double value);
 
 void createLogFile(void);
 
-void normailzeData(Data *training, Data *test);
+void normalizeData(Data *training, Data *test);
 
 double minInData(Data *data);
 
 double maxInData(Data *data);
+
+void testNeuron(Neuron *neuron, Data *test);
 
 int main(void) {
   char *path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_1/testInput10A.txt";
@@ -74,9 +76,11 @@ int main(void) {
   my_neuron.Func = &tanhFunc;
   parseFile(path, training, test);
 
-  normailzeData(training, test);
+  normalizeData(training, test);
 
   trainNeuron(&my_neuron, training);
+
+  testNeuron(&my_neuron, test);
 
   return 0;
 }
@@ -147,7 +151,7 @@ int computeActivation(Neuron *neuron, double input1, double input2) {
   double sum = 0.0;
 
   sum = neuron->Weight1 * input1 + neuron->Weight2 * input2 + neuron->Weight3;
-  neuron->Outpout = classify(sum);
+  neuron->Outpout = classify(neuron->Func(sum));
   return neuron->Outpout;
 }
 
@@ -175,9 +179,11 @@ double gradientTanh(double input) {
 }
 
 void weightUpdate(Neuron *neuron, Data *data) {
-  neuron->Weight1 = neuron->Weight1 + LEARNING_WEIGHT * (gradient(neuron, data->class)) * data->Input1;
-  neuron->Weight2 = neuron->Weight2 + LEARNING_WEIGHT * (gradient(neuron, data->class)) * data->Input2;
-  neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT * (gradient(neuron, data->class));
+  double w;
+   w = neuron->Weight1 + LEARNING_WEIGHT * (-1) * (error(neuron, data->class)) * data->Input1;
+  neuron->Weight1 = w;
+  neuron->Weight2 = neuron->Weight2 + LEARNING_WEIGHT * (-1) * (error(neuron, data->class)) * data->Input2;
+  neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT * (-1) * (error(neuron, data->class));
 }
 
 double tanhFunc(double input) {
@@ -185,14 +191,13 @@ double tanhFunc(double input) {
 }
 
 void trainNeuron(Neuron *neuron, Data *training) {
-  int result = 0;
   double err = 0.0;
 
   for (int i = 0; i < training[0].size; ++i) {
-    result = computeActivation(neuron, training[i].Input1, training[i].Input2);
-    err = error(neuron, result);
-    printf("%f\n", err);
-    weightUpdate(neuron, training);
+    computeActivation(neuron, training[i].Input1, training[i].Input2);
+    //err = error(neuron, training[i].class);
+    //printf("%f\n", err);
+    weightUpdate(neuron, &(training[i]));
   }
 }
 int classify(double value) {
@@ -212,7 +217,7 @@ void createLogFile(void) {
   }
 }
 
-void normailzeData(Data *training, Data *test) {
+void normalizeData(Data *training, Data *test) {
   double min, max, tmp;
 
   min = minInData(training);
@@ -259,5 +264,14 @@ double maxInData(Data *data) {
   }
 
   return max;
+}
+
+void testNeuron(Neuron *neuron, Data *test){
+  int result;
+  for (int i = 0; i < test[0].size; ++i) {
+    result = computeActivation(neuron, test[i].Input1, test[i].Input2);
+    printf("%d\n", result);
+  }
+
 }
 
