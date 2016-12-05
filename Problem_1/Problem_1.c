@@ -42,7 +42,7 @@ int computeActivation(Neuron *neuron, double input1, double input2);
 
 double error(Neuron *neuron, int value);
 
-double gradient(Neuron *neuron, int value);
+double gradient(Neuron *neuron, int value, double input);
 
 double gradientTanh(double input);
 
@@ -70,7 +70,7 @@ int main(void) {
   char *path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_1/testInput10A.txt";
   Data training[1000], test[100];
   Neuron my_neuron;
-  srand((unsigned) time(NULL)); //See initialisation
+  srand((unsigned) time(NULL)); //Seed initialisation
 
   initialiseNeuron(&my_neuron);
   my_neuron.Func = &tanhFunc;
@@ -165,13 +165,13 @@ void initialiseNeuron(Neuron *neuron) {
 
 double error(Neuron *neuron, int value) {
   double error = 0.0, diff;
-  diff = (double) (neuron->Outpout - value);
+  diff = (double) (value-neuron->Outpout);
   error = pow(diff, 2.0);
   return error;
 }
 
-double gradient(Neuron *neuron, int value) {
-  return 0.0;
+double gradient(Neuron *neuron, int value, double input) {
+  return (-2) * (value - neuron->Outpout) * input;
 }
 
 double gradientTanh(double input) {
@@ -179,11 +179,10 @@ double gradientTanh(double input) {
 }
 
 void weightUpdate(Neuron *neuron, Data *data) {
-  double w;
-   w = neuron->Weight1 + LEARNING_WEIGHT * (-1) * (error(neuron, data->class)) * data->Input1;
-  neuron->Weight1 = w;
-  neuron->Weight2 = neuron->Weight2 + LEARNING_WEIGHT * (-1) * (error(neuron, data->class)) * data->Input2;
-  neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT * (-1) * (error(neuron, data->class));
+
+  neuron->Weight1 =neuron->Weight1 + LEARNING_WEIGHT * (-1) * (gradient(neuron, data->class,data->Input1));
+  neuron->Weight2 = neuron->Weight2 + LEARNING_WEIGHT * (-1) * (gradient(neuron, data->class,data->Input2));
+  neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT * (-1) * (gradient(neuron, data->class,1.0));
 }
 
 double tanhFunc(double input) {
@@ -195,8 +194,8 @@ void trainNeuron(Neuron *neuron, Data *training) {
 
   for (int i = 0; i < training[0].size; ++i) {
     computeActivation(neuron, training[i].Input1, training[i].Input2);
-    //err = error(neuron, training[i].class);
-    //printf("%f\n", err);
+    err += error(neuron, training[i].class);
+    printf("%f\n", sqrt(err/(i+1)));
     weightUpdate(neuron, &(training[i]));
   }
 }
