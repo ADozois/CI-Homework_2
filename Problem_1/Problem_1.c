@@ -5,7 +5,7 @@
 #include <time.h>
 #include <math.h>
 
-#define WEIGHT_MAX 0.000001
+#define WEIGHT_MAX 0.00001
 #define LEARNING_WEIGHT 0.0001
 #define THRESHOLD 0
 
@@ -190,12 +190,14 @@ double tanhFunc(double input) {
 }
 
 void trainNeuron(Neuron *neuron, Data *training) {
-  double err = 0.0;
+  double err = 0.0, glob_err = 0.0;
 
   for (int i = 0; i < training[0].size; ++i) {
     computeActivation(neuron, training[i].Input1, training[i].Input2);
-    err += error(neuron, training[i].class);
-    printf("%f\n", sqrt(err/(i+1)));
+    err = error(neuron, training[i].class);
+    if(err != 0.0)
+      glob_err += err;
+    //printf("%f\n", sqrt(glob_err/(i+1)));
     weightUpdate(neuron, &(training[i]));
   }
 }
@@ -269,7 +271,10 @@ void testNeuron(Neuron *neuron, Data *test){
   int result;
   for (int i = 0; i < test[0].size; ++i) {
     result = computeActivation(neuron, test[i].Input1, test[i].Input2);
-    printf("%d\n", result);
+    if (result == 1)
+      printf("+%d\n", result);
+    else
+      printf("%d\n", result);
   }
 
 }
