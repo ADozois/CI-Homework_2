@@ -67,14 +67,30 @@ double maxInData(Data *data);
 void testNeuron(Neuron *neuron, Data *test);
 
 int main(void) {
-  char *path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_1/testInput10A.txt";
+  int size = 100, i = 0, j = 0, flag = 0;
+  char buff[size];
   Data training[1000], test[100];
   Neuron my_neuron;
   srand((unsigned) time(NULL)); //Seed initialisation
 
   initialiseNeuron(&my_neuron);
   my_neuron.Func = &tanhFunc;
-  parseFile(path, training, test);
+
+  while(scanf("%s",buff) == 1) {
+    if (strcmp(buff, "0,0,0\n") == 0) {
+      flag = 1;
+    } else {
+      if (flag == 0) {
+        parseTrainingLine(buff, &(training[i]));
+        ++i;
+      } else {
+        parseTestLine(buff, &(test[j]));
+        ++j;
+      }
+    }
+  }
+
+  printf("%d", training[0].size);
 
   normalizeData(training, test);
 
