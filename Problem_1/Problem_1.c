@@ -25,7 +25,7 @@ struct Data {
   double Input1;
   double Input2;
   int size;
-  int class;
+  int Class;
 };
 
 FILE *file_log;
@@ -52,7 +52,7 @@ double tanhFunc(double input);
 
 double linearFunc(double value);
 
-void trainNeuron(Neuron *neuron, Data *training);
+void trainNeuron(Neuron *neuron, Data *training, Data* test);
 
 int classify(double value);
 
@@ -66,10 +66,12 @@ double maxInData(Data *data);
 
 void testNeuron(Neuron *neuron, Data *test);
 
+void divideTraining(Data* training, Data* test);
+
 int main(void) {
   int size = 100, i = 0, j = 0, flag = 0;
-  char buff[size];
-  Data training[1000], test[100];
+  char buff[100];
+  Data training[1000], test[1000], validation[1000];
   Neuron my_neuron;
   srand((unsigned) time(NULL)); //Seed initialisation
 
@@ -77,24 +79,26 @@ int main(void) {
   my_neuron.Func = &tanhFunc;
 
   while(scanf("%s",buff) == 1) {
-    if (strcmp(buff, "0,0,0\n") == 0) {
+    if (strcmp(buff, "0,0,0") == 0) {
       flag = 1;
     } else {
       if (flag == 0) {
         parseTrainingLine(buff, &(training[i]));
         ++i;
       } else {
-        parseTestLine(buff, &(test[j]));
+        parseTestLine(buff, &(validation[j]));
         ++j;
       }
     }
   }
+  training[0].size = i;
+  test[0].size = j;
 
-  printf("%d", training[0].size);
+  normalizeData(training, validation);
 
-  normalizeData(training, test);
+  //divideTraining(training,test);
 
-  trainNeuron(&my_neuron, training);
+  trainNeuron(&my_neuron, training, test);
 
   testNeuron(&my_neuron, test);
 
@@ -102,11 +106,11 @@ int main(void) {
 }
 
 void parseFile(char *path, Data *training, Data *test) {
-  FILE *file;
+  FILE *file = NULL;
   int size = 100, i = 0, j = 0, flag = 0;
-  char buff[size];
+  char buff[100];
 
-  file = fopen(path, "r");
+  //file = fopen(path, "r");
 
   if (file) {
     while (fgets(buff, size, (FILE *) file) != NULL) {
@@ -122,15 +126,13 @@ void parseFile(char *path, Data *training, Data *test) {
         }
       }
     }
-    training[0].size = i;
-    test[0].size = j;
   } else {
     printf("Can't open file");
   }
 }
 
 void parseTrainingLine(char *line, Data *data) {
-  char *token[3], *ptr;
+  char *token[3], *ptr = NULL;
   int i = 0;
 
   ptr = strtok(line, ",\n");
@@ -143,11 +145,11 @@ void parseTrainingLine(char *line, Data *data) {
 
   data->Input1 = strtod(token[0], NULL);
   data->Input2 = strtod(token[1], NULL);
-  data->class = atoi(token[2]);
+  data->Class = atoi(token[2]);
 }
 
 void parseTestLine(char *line, Data *data) {
-  char *token[2], *ptr;
+  char *token[2], *ptr = NULL;
   int i = 0;
 
   ptr = strtok(line, ",\n");
@@ -160,7 +162,7 @@ void parseTestLine(char *line, Data *data) {
 
   data->Input1 = strtod(token[0], NULL);
   data->Input2 = strtod(token[1], NULL);
-  data->class = 0;
+  data->Class = 0;
 }
 
 int computeActivation(Neuron *neuron, double input1, double input2) {
@@ -181,7 +183,7 @@ void initialiseNeuron(Neuron *neuron) {
 
 double error(Neuron *neuron, int value) {
   double error = 0.0, diff;
-  diff = (double) (value-neuron->Outpout);
+  diff = (double) (neuron->Outpout - value);
   error = pow(diff, 2.0);
   return error;
 }
@@ -196,25 +198,27 @@ double gradientTanh(double input) {
 
 void weightUpdate(Neuron *neuron, Data *data) {
 
-  neuron->Weight1 =neuron->Weight1 + LEARNING_WEIGHT * (-1) * (gradient(neuron, data->class,data->Input1));
-  neuron->Weight2 = neuron->Weight2 + LEARNING_WEIGHT * (-1) * (gradient(neuron, data->class,data->Input2));
-  neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT * (-1) * (gradient(neuron, data->class,1.0));
+  neuron->Weight1 =neuron->Weight1 + LEARNING_WEIGHT * (-1) * (gradient(neuron, data->Class,data->Input1));
+  neuron->Weight2 = neuron->Weight2 + LEARNING_WEIGHT * (-1) * (gradient(neuron, data->Class,data->Input2));
+  neuron->Weight3 = neuron->Weight3 + LEARNING_WEIGHT * (-1) * (gradient(neuron, data->Class,1.0));
 }
 
 double tanhFunc(double input) {
   return (exp(input) - exp((-1)*input)) / (exp(input) + exp((-1) * input));
 }
 
-void trainNeuron(Neuron *neuron, Data *training) {
+void trainNeuron(Neuron *neuron, Data *training, Data* test) {
   double err = 0.0, glob_err = 0.0;
+  int i;
 
-  for (int i = 0; i < training[0].size; ++i) {
+  for (i = 0; i < training[0].size; ++i) {
     computeActivation(neuron, training[i].Input1, training[i].Input2);
-    err = error(neuron, training[i].class);
-    if(err != 0.0)
+    err = error(neuron, training[i].Class);
+    if(err != 0.0){
       glob_err += err;
     //printf("%f\n", sqrt(glob_err/(i+1)));
-    weightUpdate(neuron, &(training[i]));
+	  weightUpdate(neuron, &(training[i]));
+	}
   }
 }
 int classify(double value) {
@@ -228,7 +232,7 @@ double linearFunc(double value) {
 void createLogFile(void) {
   char *path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_1/log.txt";
 
-  file_log = fopen(path, "w");
+  //file_log = fopen(path, "w");
   if (!file_log) {
     printf("Cannot create log file");
   }
@@ -236,6 +240,7 @@ void createLogFile(void) {
 
 void normalizeData(Data *training, Data *test) {
   double min, max, tmp;
+  int j;
 
   min = minInData(training);
   max = maxInData(training);
@@ -247,7 +252,7 @@ void normalizeData(Data *training, Data *test) {
   if (tmp > max)
     max = tmp;
 
-  for (int j = 0; j < training[0].size; ++j) {
+  for (j = 0; j < training[0].size; ++j) {
     training[j].Input1 = 2 * (training[j].Input1 - min) / (max - min) - 1;
     training[j].Input2 = 2 * (training[j].Input2 - min) / (max - min) - 1;
     if (j < test[0].size) {
@@ -259,8 +264,9 @@ void normalizeData(Data *training, Data *test) {
 
 double minInData(Data *data) {
   double min = data[0].Input1;
+  int i;
 
-  for (int i = 0; i < data[0].size; ++i) {
+  for (i = 0; i < data[0].size; ++i) {
     if (data[i].Input1 < min)
       min = data[i].Input1;
     if (data[i].Input2 < min)
@@ -272,8 +278,9 @@ double minInData(Data *data) {
 
 double maxInData(Data *data) {
   double max = data[0].Input1;
+  int i;
 
-  for (int i = 0; i < data[0].size; ++i) {
+  for (i = 0; i < data[0].size; ++i) {
     if (data[i].Input1 > max)
       max = data[i].Input1;
     if (data[i].Input2 > max)
@@ -285,7 +292,9 @@ double maxInData(Data *data) {
 
 void testNeuron(Neuron *neuron, Data *test){
   int result;
-  for (int i = 0; i < test[0].size; ++i) {
+  int i;
+
+  for (i = 0; i < test[0].size; ++i) {
     result = computeActivation(neuron, test[i].Input1, test[i].Input2);
     if (result == 1)
       printf("+%d\n", result);
@@ -295,3 +304,17 @@ void testNeuron(Neuron *neuron, Data *test){
 
 }
 
+void divideTraining(Data* training, Data* test){
+	int split = (int) ceil(training[0].size*0.7);
+	int i, j = 0;
+
+	for (i = split; i < training[0].size; i++)
+	{
+		test[j].Class = training[i].Class;
+		test[j].Input1 = training[i].Input1;
+		test[j].Input2 = training[i].Input2;
+		j++;
+	}
+	training[0].size = split;
+	test[0].size = j;
+}
