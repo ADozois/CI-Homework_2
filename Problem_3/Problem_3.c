@@ -58,6 +58,8 @@ double maxInData(Data *data);
 
 void testNeuron(Neuron *neuron, Data *test);
 
+void divideTraining(Data* training, Data* test);
+
 int main (void){
   char* path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_3/testInput12D.txt";
   Data training[1000], validation[1000];
@@ -248,4 +250,18 @@ void testNeuron(Neuron *neuron, Data *test){
     //printf("%f\n", neuron->Output);
   }
 
+}
+
+void divideTraining(Data* training, Data* test){
+  int split = (int) ceil(training[0].size*0.7);
+  int i, j = 0;
+
+  for (i = split; i < training[0].size; i++)
+  {
+    test[j].Output = training[i].Output;
+    test[j].Input1 = training[i].Input1;
+    j++;
+  }
+  training[0].size = split;
+  test[0].size = j;
 }
