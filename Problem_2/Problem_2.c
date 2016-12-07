@@ -12,13 +12,25 @@
 typedef struct Neuron Neuron;
 typedef struct Data Data;
 typedef double (*functionPtr)(double);
+typedef struct Layer Layer;
+typedef struct Network Network;
+
+struct Network{
+  Layer* Layers;
+  int size;
+};
+
+struct Layer{
+  Neuron* Neurons;
+  int size;
+  Layer* Next;
+  Layer* Previous;
+};
 
 struct Neuron {
-  double Weight1;
-  double Weight2;
-  double Weight3;
+  double* Weights;
   functionPtr Func;
-  int Outpout;
+  int Output;
 };
 
 struct Data {
@@ -34,14 +46,27 @@ void parseTrainingLine(char *line, Data *data);
 
 void parseTestLine(char *line, Data *data);
 
-void initialiseNeuron(Neuron *neuron);
+void initialiseNeuron(Neuron *neuron, int nbrWeights, functionPtr func);
 
-int computeActivation(Neuron *neuron, double input1, double input2);
+void createNetwork(Network* network, int nbrLayers, int* nbrNodes);
 
-double error(Neuron *neuron, int value);
+void createInputLayer(Layer* layer, int nbrNode, Layer* Next);
+
+double tanhFunc(double input);
 
 
-int main2(void) {
+int main(void) {
+  Network network;
+  Layer test;
+  Layer* ptrLayer = &test;
+  int i = 0;
+  int layers[3] = {2,3,1};
+
+  network.Layers = NULL;
+  network.size = 3;
+
+  createNetwork(&network, network.size, layers);
+
 
   return 0;
 }
@@ -108,25 +133,29 @@ void parseTestLine(char *line, Data *data) {
   data->class = 0;
 }
 
-void initialiseNeuron(Neuron *neuron) {
-  neuron->Outpout = 0;
-  neuron->Weight1 = ((double) rand() / (double) (RAND_MAX)) * WEIGHT_MAX;
-  neuron->Weight2 = ((double) rand() / (double) (RAND_MAX)) * WEIGHT_MAX;
-  neuron->Weight3 = ((double) rand() / (double) (RAND_MAX)) * WEIGHT_MAX;
-  neuron->Func = NULL;
+void initialiseNeuron(Neuron *neuron, int nbrWeights, functionPtr func) {
+  int i = 0;
+  neuron->Output = 0;
+  neuron->Weights = (double*) malloc(sizeof(double)*nbrWeights);
+  for (i = 0; i < nbrWeights; ++i) {
+    neuron->Weights[i] = ((double) rand() / (double) (RAND_MAX)) * WEIGHT_MAX;
+  }
+  neuron->Func = func;
 }
 
-int computeActivation(Neuron *neuron, double input1, double input2) {
-  double sum = 0.0;
+void createNetwork(Network* network, int nbrLayers, int* nbrNodes){
+  network->Layers = (Layer*) malloc(sizeof(Layer)*nbrLayers);
+  createInputLayer(&(network->Layers[0]), nbrNodes[0], &(network->Layers[1]));
 
-  sum = neuron->Weight1 * input1 + neuron->Weight2 * input2 + neuron->Weight3;
-  //neuron->Outpout = classify(sum);
-  return neuron->Outpout;
 }
 
-double error(Neuron *neuron, int value) {
-  double error = 0.0, diff;
-  diff = (double) (neuron->Outpout - value);
-  error = pow(diff, 2.0);
-  return error;
+void createInputLayer(Layer* layer, int nbrNode, Layer* next){
+  int i;
+  layer->Neurons = (Neuron*) malloc(sizeof(Neuron)*nbrNode);
+  for (i = 0; i < nbrNode; ++i){
+    initialiseNeuron(&(layer->Neurons[i]), 1, tanh);
+  }
+  layer->size = nbrNode;
+  layer->Next = next;
+  layer->Previous = NULL;
 }
