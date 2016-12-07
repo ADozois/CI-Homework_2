@@ -6,7 +6,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -DNDEBUG -static -std=c99 -pipe")
 
 set(SOURCE_FILES
     LICENSE
-    README.md Problem_1/Problem_1.c Problem_2/Problem_2.c)
+    README.md Problem_3/Problem_3.c)
 
 
 add_executable(CI_Homework_2 ${SOURCE_FILES})
