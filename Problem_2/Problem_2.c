@@ -52,6 +52,8 @@ void createNetwork(Network* network, int nbrLayers, int* nbrNodes);
 
 void createInputLayer(Layer* layer, int nbrNode, Layer* Next);
 
+void createOutputLayer(Layer* layer, int nbrNode, Layer* Previous);
+
 double tanhFunc(double input);
 
 
@@ -146,6 +148,7 @@ void initialiseNeuron(Neuron *neuron, int nbrWeights, functionPtr func) {
 void createNetwork(Network* network, int nbrLayers, int* nbrNodes){
   network->Layers = (Layer*) malloc(sizeof(Layer)*nbrLayers);
   createInputLayer(&(network->Layers[0]), nbrNodes[0], &(network->Layers[1]));
+  createOutputLayer(&(network->Layers[nbrLayers-1]), nbrNodes[nbrLayers-1], &(network->Layers[nbrLayers-2]));
 
 }
 
@@ -158,4 +161,15 @@ void createInputLayer(Layer* layer, int nbrNode, Layer* next){
   layer->size = nbrNode;
   layer->Next = next;
   layer->Previous = NULL;
+}
+
+void createOutputLayer(Layer* layer, int nbrNode, Layer* Previous){
+  int i;
+  layer->Neurons = (Neuron*) malloc(sizeof(Neuron)*nbrNode);
+  for (i = 0; i < nbrNode; ++i){
+    initialiseNeuron(&(layer->Neurons[i]), Previous->size, tanh);
+  }
+  layer->size = nbrNode;
+  layer->Next = NULL;
+  layer->Previous = Previous;
 }
