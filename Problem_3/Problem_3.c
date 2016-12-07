@@ -56,13 +56,16 @@ double minInData(Data *data);
 
 double maxInData(Data *data);
 
-void testNeuron(Neuron *neuron, Data *test);
+void validateNeuron(Neuron *neuron, Data *test);
 
 void divideTraining(Data* training, Data* test);
 
+void testNeuron(Neuron *neuron, Data *test);
+
+
 int main (void){
   char* path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_3/testInput12D.txt";
-  Data training[1000], validation[1000];
+  Data training[1000], validation[1000], test[100];
   Neuron neuron;
   int i;
 
@@ -70,13 +73,20 @@ int main (void){
 
   parseFile(path,training,validation);
 
-  //normalizeData(training, validation);
+  normalizeData(training, validation);
 
-  for (int i = 0; i < 2; ++i) {
+  divideTraining(training,test);
+
+  for (int i = 0; i < 100; ++i) {
+    printf("Epoch: %d  training error: \n", (i+1));
     trainNeuron(&neuron, training);
+    printf("Epoch: %d  test error: \n", (i+1));
+    testNeuron(&neuron,test);
   }
 
-  testNeuron(&neuron, validation);
+  printf("Formula: %fx+%f",neuron.Weight1, neuron.Weight2);
+
+  validateNeuron(&neuron, validation);
 
   return 0;
 }
@@ -242,7 +252,7 @@ double maxInData(Data *data) {
 }
 
 
-void testNeuron(Neuron *neuron, Data *test){
+void validateNeuron(Neuron *neuron, Data *test){
   int i;
 
   for (i = 0; i < test[0].size; ++i) {
@@ -264,4 +274,19 @@ void divideTraining(Data* training, Data* test){
   }
   training[0].size = split;
   test[0].size = j;
+}
+
+void testNeuron(Neuron *neuron, Data *test){
+  double err = 0.0, glob_err = 0.0;
+  int i;
+
+  for (i = 0; i < test[0].size; ++i) {
+    computeActivation(neuron, test[i].Input1);
+    err = error(neuron, test[i].Output);
+    if(err != 0.0) {
+      glob_err += err;
+      printf("%f\n", sqrt(glob_err/(i+1)));
+    }
+  }
+
 }
