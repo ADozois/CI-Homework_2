@@ -100,7 +100,7 @@ int main(void) {
 
   trainNeuron(&my_neuron, training, test);
 
-  testNeuron(&my_neuron, test);
+  testNeuron(&my_neuron, validation);
 
   return 0;
 }
@@ -110,7 +110,7 @@ void parseFile(char *path, Data *training, Data *test) {
   int size = 100, i = 0, j = 0, flag = 0;
   char buff[100];
 
-  //file = fopen(path, "r");
+  file = fopen(path, "r");
 
   if (file) {
     while (fgets(buff, size, (FILE *) file) != NULL) {
@@ -189,7 +189,7 @@ double error(Neuron *neuron, int value) {
 }
 
 double gradient(Neuron *neuron, int value, double input) {
-  return (-2) * (value - neuron->Outpout) * input;
+  return (-2) * (neuron->Outpout - value) * input;
 }
 
 double gradientTanh(double input) {
