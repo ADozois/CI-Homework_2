@@ -18,6 +18,7 @@ typedef struct Network Network;
 struct Network{
   Layer* Layers;
   int size;
+  int* Layers_Info;
 };
 
 struct Layer{
@@ -50,22 +51,24 @@ void initialiseNeuron(Neuron *neuron, int nbrWeights, functionPtr func);
 
 void createNetwork(Network* network, int nbrLayers, int* nbrNodes);
 
-void createInputLayer(Layer* layer, int nbrNode, Layer* Next);
+void createInputLayer(Network* network);
 
-void createOutputLayer(Layer* layer, int nbrNode, Layer* Previous);
+void createOutputLayer(Network* network);
+
+void createHiddenLayer(Network* network);
+
+void createLayer(Layer* actual, Layer* next, Layer* previous, int nbrNodes);
 
 double tanhFunc(double input);
 
 
 int main(void) {
   Network network;
-  Layer test;
-  Layer* ptrLayer = &test;
-  int i = 0;
   int layers[3] = {2,3,1};
 
   network.Layers = NULL;
   network.size = 3;
+  network.Layers_Info = layers;
 
   createNetwork(&network, network.size, layers);
 
@@ -147,29 +150,33 @@ void initialiseNeuron(Neuron *neuron, int nbrWeights, functionPtr func) {
 
 void createNetwork(Network* network, int nbrLayers, int* nbrNodes){
   network->Layers = (Layer*) malloc(sizeof(Layer)*nbrLayers);
-  createInputLayer(&(network->Layers[0]), nbrNodes[0], &(network->Layers[1]));
-  createOutputLayer(&(network->Layers[nbrLayers-1]), nbrNodes[nbrLayers-1], &(network->Layers[nbrLayers-2]));
-
+  createInputLayer(network);
+  createOutputLayer(network);
+  createHiddenLayer(network);
 }
 
-void createInputLayer(Layer* layer, int nbrNode, Layer* next){
-  int i;
-  layer->Neurons = (Neuron*) malloc(sizeof(Neuron)*nbrNode);
-  for (i = 0; i < nbrNode; ++i){
-    initialiseNeuron(&(layer->Neurons[i]), 1, tanh);
-  }
-  layer->size = nbrNode;
-  layer->Next = next;
-  layer->Previous = NULL;
+void createInputLayer(Network* network){
+  createLayer(&(network->Layers[0]),&(network->Layers[1]),NULL,network->Layers_Info[0]);
 }
 
-void createOutputLayer(Layer* layer, int nbrNode, Layer* Previous){
+void createOutputLayer(Network* network){
+  createLayer(&(network->Layers[network->size-1]),NULL,&(network->Layers[network->size-2]),network->Layers_Info[network->size-1]);
+}
+
+void createHiddenLayer(Network* network){
   int i;
-  layer->Neurons = (Neuron*) malloc(sizeof(Neuron)*nbrNode);
-  for (i = 0; i < nbrNode; ++i){
-    initialiseNeuron(&(layer->Neurons[i]), Previous->size, tanh);
+  for(i=1; i<network->size-1; ++i){
+    createLayer(&(network->Layers[i]),&(network->Layers[i+1]),&(network->Layers[i-1]),network->Layers_Info[network->size-1]);
   }
-  layer->size = nbrNode;
-  layer->Next = NULL;
-  layer->Previous = Previous;
+}
+
+void createLayer(Layer* actual, Layer* next, Layer* previous, int nbrNodes){
+  int i;
+  actual->Neurons = (Neuron*) malloc(sizeof(Neuron)*nbrNodes);
+  for (i = 0; i < nbrNodes; ++i){
+    initialiseNeuron(&(actual->Neurons[i]), 1, tanh);
+  }
+  actual->size = nbrNodes;
+  actual->Next = next;
+  actual->Previous = previous;
 }
