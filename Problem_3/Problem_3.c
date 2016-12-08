@@ -6,7 +6,7 @@
 #include <math.h>
 
 #define WEIGHT_MAX 0.000001
-#define LEARNING_WEIGHT 0.001
+#define LEARNING_WEIGHT 0.0001
 #define THRESHOLD 0
 
 typedef struct Neuron Neuron;
@@ -77,14 +77,14 @@ int main (void){
 
   divideTraining(training,test);
 
-  for (int i = 0; i < 100; ++i) {
+  for (i = 0; i < 100; ++i) {
     printf("Epoch: %d  training error: \n", (i+1));
     trainNeuron(&neuron, training);
     printf("Epoch: %d  test error: \n", (i+1));
     testNeuron(&neuron,test);
   }
 
-  printf("Formula: %fx+%f",neuron.Weight1, neuron.Weight2);
+  printf("[%f,%f]",neuron.Weight2, neuron.Weight1);
 
   validateNeuron(&neuron, validation);
 
