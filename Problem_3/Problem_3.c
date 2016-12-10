@@ -63,28 +63,45 @@ void divideTraining(Data* training, Data* test);
 void testNeuron(Neuron *neuron, Data *test);
 
 
+
 int main (void){
   char* path = "/home/gemini/TUM/CI/CI-Homework_2/Problem_3/testInput12D.txt";
+  char buff[100];
+  int flag = 0;
   Data training[1000], validation[1000], test[100];
   Neuron neuron;
-  int i;
+  int i = 0, j = 0;
 
   initialiseNeuron(&neuron);
 
-  parseFile(path,training,validation);
+  while(scanf("%s",buff) == 1) {
+    if (strcmp(buff, "0,0") == 0) {
+      flag = 1;
+    } else {
+      if (flag == 0) {
+        parseTrainingLine(buff, &(training[i]));
+        ++i;
+      } else {
+        parseTestLine(buff, &(validation[j]));
+        ++j;
+      }
+    }
+  }
+
+  //parseFile(path,training,validation);
 
   normalizeData(training, validation);
 
   divideTraining(training,test);
 
   for (i = 0; i < 100; ++i) {
-    printf("Epoch: %d  training error: \n", (i+1));
+    //printf("Epoch: %d  training error: \n", (i+1));
     trainNeuron(&neuron, training);
-    printf("Epoch: %d  test error: \n", (i+1));
+    //printf("Epoch: %d  test error: \n", (i+1));
     testNeuron(&neuron,test);
   }
 
-  printf("[%f,%f]",neuron.Weight2, neuron.Weight1);
+  //printf("[%f,%f]",neuron.Weight2, neuron.Weight1);
 
   validateNeuron(&neuron, validation);
 
@@ -171,7 +188,7 @@ void trainNeuron(Neuron *neuron, Data *training) {
     err = error(neuron, training[i].Output);
     if(err != 0.0){
       glob_err += err;
-      printf("%f\n", sqrt(glob_err/(i+1)));
+      //printf("%f\n", sqrt(glob_err/(i+1)));
       weightUpdate(neuron, &(training[i]));
     }
   }
@@ -257,7 +274,7 @@ void validateNeuron(Neuron *neuron, Data *test){
 
   for (i = 0; i < test[0].size; ++i) {
     computeActivation(neuron, test[i].Input1);
-    //printf("%f\n", neuron->Output);
+    printf("%f\n", neuron->Output);
   }
 
 }
@@ -285,8 +302,9 @@ void testNeuron(Neuron *neuron, Data *test){
     err = error(neuron, test[i].Output);
     if(err != 0.0) {
       glob_err += err;
-      printf("%f\n", sqrt(glob_err/(i+1)));
+      //printf("%f\n", sqrt(glob_err/(i+1)));
     }
   }
 
 }
+
