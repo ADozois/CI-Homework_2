@@ -32,7 +32,7 @@ struct Layer{
 struct Neuron {
   double* Weights;
   functionPtr Func;
-  int Output;
+  double Output;
 };
 
 struct Data {
@@ -64,13 +64,15 @@ double tanhFunc(double input);
 
 void normalizeData(Data *training, Data *test);
 
-void feedFoward(Network* network, int input);
+void feedFoward(Network* network, double input);
 
 void computeActivation(Neuron *neuron, double input);
 
+void computeLayer(Layer *layer);
+
 int main(void) {
   Network network;
-  int layers[NETWORK_SIZE] = {2,4,3,2,1};
+  int layers[NETWORK_SIZE] = {1,4,3,2,1};
 
   network.Layers = NULL;
   network.size = NETWORK_SIZE;
@@ -78,6 +80,7 @@ int main(void) {
 
   createNetwork(&network, network.size, layers);
 
+  feedFoward(&network, 1.0);
 
   return 0;
 }
@@ -191,10 +194,25 @@ void createLayer(Layer* actual, Layer* next, Layer* previous, int nbrNodes){
   }
 }
 
-void feedFoward(Network* network, int input){
-
+void feedFoward(Network* network, double input){
+  int i;
+  computeActivation(&(network->Layers[0].Neurons[0]),input);
+  for (i = 1; i < network->size; ++i) {
+    computeLayer(&(network->Layers[i]));
+  }
 }
 
 void computeActivation(Neuron *neuron, double input) {
   neuron->Output = neuron->Func(input);
+}
+
+void computeLayer(Layer *layer){
+  int i, j;
+  double sum = 0.0;
+  for (i = 0; i < layer->size; ++i) {
+    for (j = 0; j < layer->Previous->size; ++j) {
+      sum += layer->Neurons[i].Weights[j] * layer->Previous->Neurons[j].Output;
+    }
+    computeActivation(&(layer->Neurons[i]),sum);
+  }
 }
