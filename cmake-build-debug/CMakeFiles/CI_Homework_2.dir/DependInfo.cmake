@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/home/gemini/TUM/CI/CI-Homework_2/Problem_3/Problem_3.c" "/home/gemini/TUM/CI/CI-Homework_2/cmake-build-debug/CMakeFiles/CI_Homework_2.dir/Problem_3/Problem_3.c.o"
+  "/home/gemini/TUM/CI/CI-Homework_2/Problem_4/Problem_4.c" "/home/gemini/TUM/CI/CI-Homework_2/cmake-build-debug/CMakeFiles/CI_Homework_2.dir/Problem_4/Problem_4.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 

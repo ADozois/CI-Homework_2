@@ -123,32 +123,32 @@ CI_Homework_2/fast:
 	$(MAKE) -f CMakeFiles/CI_Homework_2.dir/build.make CMakeFiles/CI_Homework_2.dir/build
 .PHONY : CI_Homework_2/fast
 
-Problem_3/Problem_3.o: Problem_3/Problem_3.c.o
+Problem_4/Problem_4.o: Problem_4/Problem_4.c.o
 
-.PHONY : Problem_3/Problem_3.o
+.PHONY : Problem_4/Problem_4.o
 
 # target to build an object file
-Problem_3/Problem_3.c.o:
-	$(MAKE) -f CMakeFiles/CI_Homework_2.dir/build.make CMakeFiles/CI_Homework_2.dir/Problem_3/Problem_3.c.o
-.PHONY : Problem_3/Problem_3.c.o
+Problem_4/Problem_4.c.o:
+	$(MAKE) -f CMakeFiles/CI_Homework_2.dir/build.make CMakeFiles/CI_Homework_2.dir/Problem_4/Problem_4.c.o
+.PHONY : Problem_4/Problem_4.c.o
 
-Problem_3/Problem_3.i: Problem_3/Problem_3.c.i
+Problem_4/Problem_4.i: Problem_4/Problem_4.c.i
 
-.PHONY : Problem_3/Problem_3.i
+.PHONY : Problem_4/Problem_4.i
 
 # target to preprocess a source file
-Problem_3/Problem_3.c.i:
-	$(MAKE) -f CMakeFiles/CI_Homework_2.dir/build.make CMakeFiles/CI_Homework_2.dir/Problem_3/Problem_3.c.i
-.PHONY : Problem_3/Problem_3.c.i
+Problem_4/Problem_4.c.i:
+	$(MAKE) -f CMakeFiles/CI_Homework_2.dir/build.make CMakeFiles/CI_Homework_2.dir/Problem_4/Problem_4.c.i
+.PHONY : Problem_4/Problem_4.c.i
 
-Problem_3/Problem_3.s: Problem_3/Problem_3.c.s
+Problem_4/Problem_4.s: Problem_4/Problem_4.c.s
 
-.PHONY : Problem_3/Problem_3.s
+.PHONY : Problem_4/Problem_4.s
 
 # target to generate assembly for a file
-Problem_3/Problem_3.c.s:
-	$(MAKE) -f CMakeFiles/CI_Homework_2.dir/build.make CMakeFiles/CI_Homework_2.dir/Problem_3/Problem_3.c.s
-.PHONY : Problem_3/Problem_3.c.s
+Problem_4/Problem_4.c.s:
+	$(MAKE) -f CMakeFiles/CI_Homework_2.dir/build.make CMakeFiles/CI_Homework_2.dir/Problem_4/Problem_4.c.s
+.PHONY : Problem_4/Problem_4.c.s
 
 # Help Target
 help:
@@ -159,9 +159,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... CI_Homework_2"
-	@echo "... Problem_3/Problem_3.o"
-	@echo "... Problem_3/Problem_3.i"
-	@echo "... Problem_3/Problem_3.s"
+	@echo "... Problem_4/Problem_4.o"
+	@echo "... Problem_4/Problem_4.i"
+	@echo "... Problem_4/Problem_4.s"
 .PHONY : help
 
 
