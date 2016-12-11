@@ -58,17 +58,19 @@ void createOutputLayer(Network* network);
 
 void createHiddenLayer(Network* network);
 
-void createLayer(Layer* actual, Layer* next, Layer* previous, int nbrNodes);
+void createLayer(Layer* actual, Layer* next, Layer* previous, int nbrNodes, functionPtr func);
 
 double tanhFunc(double input);
 
 void normalizeData(Data *training, Data *test);
 
-void feedFoward(Network* network, double input);
+void feedForward(Network *network, double input);
 
 void computeActivation(Neuron *neuron, double input);
 
 void computeLayer(Layer *layer);
+
+double linearFunc(double input);
 
 int main(void) {
   Network network;
@@ -80,7 +82,7 @@ int main(void) {
 
   createNetwork(&network, network.size, layers);
 
-  feedFoward(&network, 1.0);
+  feedForward(&network, 1.0);
 
   return 0;
 }
@@ -165,21 +167,21 @@ void createNetwork(Network* network, int nbrLayers, int* nbrNodes){
 }
 
 void createInputLayer(Network* network){
-  createLayer(&(network->Layers[0]),&(network->Layers[1]),NULL,network->Layers_Info[0]);
+  createLayer(&(network->Layers[0]),&(network->Layers[1]),NULL,network->Layers_Info[0], tanh);
 }
 
 void createOutputLayer(Network* network){
-  createLayer(&(network->Layers[network->size-1]),NULL,&(network->Layers[network->size-2]),network->Layers_Info[network->size-1]);
+  createLayer(&(network->Layers[network->size-1]),NULL,&(network->Layers[network->size-2]),network->Layers_Info[network->size-1],linearFunc);
 }
 
 void createHiddenLayer(Network* network){
   int i;
   for(i=1; i<network->size-1; ++i){
-    createLayer(&(network->Layers[i]),&(network->Layers[i+1]),&(network->Layers[i-1]),network->Layers_Info[i]);
+    createLayer(&(network->Layers[i]),&(network->Layers[i+1]),&(network->Layers[i-1]),network->Layers_Info[i], tanh);
   }
 }
 
-void createLayer(Layer* actual, Layer* next, Layer* previous, int nbrNodes){
+void createLayer(Layer* actual, Layer* next, Layer* previous, int nbrNodes, functionPtr func){
   int i;
   actual->Neurons = (Neuron*) malloc(sizeof(Neuron)*nbrNodes);
   actual->size = nbrNodes;
@@ -187,14 +189,14 @@ void createLayer(Layer* actual, Layer* next, Layer* previous, int nbrNodes){
   actual->Previous = previous;
   for (i = 0; i < nbrNodes; ++i){
     if (previous == NULL) {
-      initialiseNeuron(&(actual->Neurons[i]), 1, tanh);
+      initialiseNeuron(&(actual->Neurons[i]), 1, func);
     } else{
-      initialiseNeuron(&(actual->Neurons[i]), actual->Previous->size, tanh);
+      initialiseNeuron(&(actual->Neurons[i]), actual->Previous->size, func);
     }
   }
 }
 
-void feedFoward(Network* network, double input){
+void feedForward(Network *network, double input){
   int i;
   computeActivation(&(network->Layers[0].Neurons[0]),input);
   for (i = 1; i < network->size; ++i) {
@@ -215,4 +217,8 @@ void computeLayer(Layer *layer){
     }
     computeActivation(&(layer->Neurons[i]),sum);
   }
+}
+
+double linearFunc(double input){
+  return input;
 }
