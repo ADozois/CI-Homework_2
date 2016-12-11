@@ -8,6 +8,7 @@
 #define WEIGHT_MAX 0.000001
 #define LEARNING_WEIGHT 0.0001
 #define THRESHOLD 0
+#define NETWORK_SIZE 5
 
 typedef struct Neuron Neuron;
 typedef struct Data Data;
@@ -61,13 +62,15 @@ void createLayer(Layer* actual, Layer* next, Layer* previous, int nbrNodes);
 
 double tanhFunc(double input);
 
+void normalizeData(Data *training, Data *test);
+
 
 int main(void) {
   Network network;
-  int layers[3] = {2,3,1};
+  int layers[NETWORK_SIZE] = {2,4,3,2,1};
 
   network.Layers = NULL;
-  network.size = 3;
+  network.size = NETWORK_SIZE;
   network.Layers_Info = layers;
 
   createNetwork(&network, network.size, layers);
@@ -166,7 +169,7 @@ void createOutputLayer(Network* network){
 void createHiddenLayer(Network* network){
   int i;
   for(i=1; i<network->size-1; ++i){
-    createLayer(&(network->Layers[i]),&(network->Layers[i+1]),&(network->Layers[i-1]),network->Layers_Info[network->size-1]);
+    createLayer(&(network->Layers[i]),&(network->Layers[i+1]),&(network->Layers[i-1]),network->Layers_Info[i]);
   }
 }
 
