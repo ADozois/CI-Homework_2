@@ -64,6 +64,9 @@ double tanhFunc(double input);
 
 void normalizeData(Data *training, Data *test);
 
+void feedFoward(Network* network, int input);
+
+void computeActivation(Neuron *neuron, double input);
 
 int main(void) {
   Network network;
@@ -154,8 +157,8 @@ void initialiseNeuron(Neuron *neuron, int nbrWeights, functionPtr func) {
 void createNetwork(Network* network, int nbrLayers, int* nbrNodes){
   network->Layers = (Layer*) malloc(sizeof(Layer)*nbrLayers);
   createInputLayer(network);
-  createOutputLayer(network);
   createHiddenLayer(network);
+  createOutputLayer(network);
 }
 
 void createInputLayer(Network* network){
@@ -176,10 +179,22 @@ void createHiddenLayer(Network* network){
 void createLayer(Layer* actual, Layer* next, Layer* previous, int nbrNodes){
   int i;
   actual->Neurons = (Neuron*) malloc(sizeof(Neuron)*nbrNodes);
-  for (i = 0; i < nbrNodes; ++i){
-    initialiseNeuron(&(actual->Neurons[i]), 1, tanh);
-  }
   actual->size = nbrNodes;
   actual->Next = next;
   actual->Previous = previous;
+  for (i = 0; i < nbrNodes; ++i){
+    if (previous == NULL) {
+      initialiseNeuron(&(actual->Neurons[i]), 1, tanh);
+    } else{
+      initialiseNeuron(&(actual->Neurons[i]), actual->Previous->size, tanh);
+    }
+  }
+}
+
+void feedFoward(Network* network, int input){
+
+}
+
+void computeActivation(Neuron *neuron, double input) {
+  neuron->Output = neuron->Func(input);
 }
