@@ -173,7 +173,7 @@ void createNetwork(Network* network, int nbrLayers, int* nbrNodes){
 }
 
 void createInputLayer(Network* network){
-  createLayer(&(network->Layers[0]),&(network->Layers[1]),NULL,network->Layers_Info[0]+1, tanh);
+  createLayer(&(network->Layers[0]),&(network->Layers[1]),NULL,network->Layers_Info[0]+1, linearFunc);
 }
 
 void createOutputLayer(Network* network){
@@ -242,6 +242,6 @@ void updateWeightOutput(Network* network){
   int i;
 
   for (i = 0; i < network->Layers[network->size-1].size; ++i) {
-    network->Layers[network->size-1].Neurons[0].Weights[i] +=  
+    network->Layers[network->size-1].Neurons[0].Weights[i] +=
   }
 }
