@@ -72,6 +72,10 @@ void computeLayer(Layer *layer);
 
 double linearFunc(double input);
 
+void backPropagation(Network* network, double output);
+
+double tanhDerivate(double input);
+
 int main(void) {
   Network network;
   int layers[NETWORK_SIZE] = {1,4,3,2,1};
@@ -167,7 +171,7 @@ void createNetwork(Network* network, int nbrLayers, int* nbrNodes){
 }
 
 void createInputLayer(Network* network){
-  createLayer(&(network->Layers[0]),&(network->Layers[1]),NULL,network->Layers_Info[0], tanh);
+  createLayer(&(network->Layers[0]),&(network->Layers[1]),NULL,network->Layers_Info[0]+1, tanh);
 }
 
 void createOutputLayer(Network* network){
@@ -198,7 +202,8 @@ void createLayer(Layer* actual, Layer* next, Layer* previous, int nbrNodes, func
 
 void feedForward(Network *network, double input){
   int i;
-  computeActivation(&(network->Layers[0].Neurons[0]),input);
+  computeActivation(&(network->Layers[0].Neurons[0]),1.0);
+  computeActivation(&(network->Layers[0].Neurons[1]),input);
   for (i = 1; i < network->size; ++i) {
     computeLayer(&(network->Layers[i]));
   }
@@ -221,4 +226,12 @@ void computeLayer(Layer *layer){
 
 double linearFunc(double input){
   return input;
+}
+
+void backPropagation(Network* network, double output){
+
+}
+
+double tanhDerivate(double input){
+  return 1 - pow(tanh(input),2);
 }
