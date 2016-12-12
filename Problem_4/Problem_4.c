@@ -76,6 +76,8 @@ void backPropagation(Network* network, double output);
 
 double tanhDerivate(double input);
 
+void updateWeightOutput(Network* network);
+
 int main(void) {
   Network network;
   int layers[NETWORK_SIZE] = {1,4,3,2,1};
@@ -234,4 +236,12 @@ void backPropagation(Network* network, double output){
 
 double tanhDerivate(double input){
   return 1 - pow(tanh(input),2);
+}
+
+void updateWeightOutput(Network* network){
+  int i;
+
+  for (i = 0; i < network->Layers[network->size-1].size; ++i) {
+    network->Layers[network->size-1].Neurons[0].Weights[i] +=  
+  }
 }
