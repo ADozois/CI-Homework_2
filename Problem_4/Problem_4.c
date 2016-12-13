@@ -36,10 +36,9 @@ struct Neuron {
 };
 
 struct Data {
-  double Input1;
-  double Input2;
+  double Input;
   int size;
-  int class;
+  double Output;
 };
 
 void parseFile(char *file, Data *training, Data *test);
@@ -83,6 +82,7 @@ void trainNetwork(Network* network, Data* train, Data* test);
 int main(void) {
   Network network;
   int layers[NETWORK_SIZE] = {1, 4, 3, 2, 1};
+  double y = 0.02663;
 
   network.Layers = NULL;
   network.size = NETWORK_SIZE;
@@ -91,6 +91,7 @@ int main(void) {
   createNetwork(&network, network.size, layers);
 
   feedForward(&network, 1.0);
+  backPropagation(&network,&y,network.size-1);
 
   return 0;
 }
@@ -135,9 +136,8 @@ void parseTrainingLine(char *line, Data *data) {
     ++i;
   }
 
-  data->Input1 = strtod(token[0], NULL);
-  data->Input2 = strtod(token[1], NULL);
-  data->class = atoi(token[2]);
+  data->Input = strtod(token[0], NULL);
+  data->Output = strtod(token[1], NULL);
 }
 
 void parseTestLine(char *line, Data *data) {
@@ -152,9 +152,8 @@ void parseTestLine(char *line, Data *data) {
     ++i;
   }
 
-  data->Input1 = strtod(token[0], NULL);
-  data->Input2 = strtod(token[1], NULL);
-  data->class = 0;
+  data->Input = strtod(token[0], NULL);
+  data->Output = strtod(token[1], NULL);
 }
 
 void initialiseNeuron(Neuron *neuron, int nbrWeights, functionPtr func) {
@@ -279,7 +278,8 @@ void updateWeights(Network *network, double *delta, int index) {
 void trainNetwork(Network* network, Data* train, Data* test){
   int i;
 
-  for (i = 0; i < train->size; ++i) {
-    
+  for (i = 0; i < train[0].size; ++i) {
+    feedForward(network, train[i].Output);
+    backPropagation(network, &(train[i].Output),network->size-1);
   }
 }
