@@ -5,8 +5,8 @@
 #include <time.h>
 #include <math.h>
 
-#define WEIGHT_MAX 0.001
-#define LEARNING_WEIGHT 0.015
+#define WEIGHT_MAX 0.0001
+#define LEARNING_WEIGHT 0.15
 #define THRESHOLD 0
 #define NETWORK_SIZE 6
 
@@ -111,7 +111,7 @@ int main(void) {
 
   //printf("%f", training[0].Output - network.Layers[2].Neurons[2].Output);
 
-  for (i = 0; i < 10; ++i) {
+  for (i = 0; i < 100000; ++i) {
     printf("Epoch :%d\n", i + 1);
     trainNetwork(&network, training, validation);
   }
@@ -225,7 +225,7 @@ void createHiddenLayer(Network *network) {
 
 void createLayer(Layer *actual, Layer *next, Layer *previous, int nbrNodes, functionPtr func, int index) {
   int i;
-  if (index > 0 && index < NETWORK_SIZE - 2) {
+  if (index > 0 && index < NETWORK_SIZE - 1) {
     actual->Neurons = (Neuron *) malloc(sizeof(Neuron) * (nbrNodes + 1));
     nbrNodes += 1;
   }else{
@@ -234,7 +234,7 @@ void createLayer(Layer *actual, Layer *next, Layer *previous, int nbrNodes, func
   actual->size = nbrNodes;
   actual->Next = next;
   actual->Previous = previous;
-  if (index > 0 && index < NETWORK_SIZE - 2) {
+  if (index > 0 && index < NETWORK_SIZE - 1) {
     for (i = 0; i < nbrNodes - 1; ++i) {
       initialiseNeuron(&(actual->Neurons[i]), actual->Previous->size, func);
     }
@@ -323,7 +323,7 @@ void computeLayer(Layer *layer, int index) {
   int i, j;
   double sum = 0.0, input, weight;
 
-  if (index < NETWORK_SIZE - 2) {
+  if (index < NETWORK_SIZE - 1) {
     for (i = 0; i < layer->size - 1; ++i) {
       for (j = 0; j < layer->Previous->size; ++j) {
         input = layer->Previous->Neurons[j].Output;
@@ -334,6 +334,16 @@ void computeLayer(Layer *layer, int index) {
       sum = 0.0;
     }
     computeActivation(&(layer->Neurons[layer->size - 1]), 1.0);
+  } else {
+    for (i = 0; i < layer->size; ++i) {
+      for (j = 0; j < layer->Previous->size; ++j) {
+        input = layer->Previous->Neurons[j].Output;
+        weight = layer->Neurons[i].Weights[j];
+        sum += weight * input;
+      }
+      computeActivation(&(layer->Neurons[i]), sum);
+      sum = 0.0;
+    }
   }
 }
 
@@ -374,13 +384,15 @@ double tanhDerivate(double input) {
 
 void updateWeights(Network *network, double *delta, int index) {
   int i, j;
-  double err, output;
+  double err, output, var;
 
   for (i = 0; i < network->Layers[index].size; ++i) { /// For all neurons in current layer
     for (j = 0; j < network->Layers[index - 1].size; ++j) { /// For all weight in the neuron
       err = delta[i];
       output = network->Layers[index].Neurons[i].Output;
-      network->Layers[index].Neurons[i].Weights[j] += LEARNING_WEIGHT * (1) * err * output;
+      var = LEARNING_WEIGHT * (-1) * err * output;
+      //printf("Delta: %1.20f \n", var);
+      network->Layers[index].Neurons[i].Weights[j] += var;
     }
   }
 }
@@ -392,7 +404,7 @@ void trainNetwork(Network *network, Data *train, Data *test) {
   for (i = 0; i < train[0].size; ++i) {
     feedForward(network, train[i].Input);
     output = network->Layers[NETWORK_SIZE - 1].Neurons->Output;
-   // printf("Output: %f\n", output);
+    printf("Output: %1.25f\n", output);
     err = pow((train[i].Output - network->Layers[NETWORK_SIZE - 1].Neurons->Output), 2);
     sum_err += err;
     printf("Error: %f\n", sum_err / (i+1));
