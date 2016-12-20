@@ -6,7 +6,7 @@
 #include <math.h>
 
 #define WEIGHT_MAX 0.001
-#define LEARNING_RATE 0.0001
+#define LEARNING_RATE 0.000001
 #define THRESHOLD 0
 #define NETWORK_SIZE 6
 
@@ -103,7 +103,7 @@ int main(void) {
 
   parseFile("/home/gemini/TUM/CI/CI-Homework_2/Problem_4/testInput13A.txt", training, validation);
 
-  printAllW(&network);
+  //printAllW(&network);
 
   normalizeData(training, validation);
 
@@ -116,9 +116,9 @@ int main(void) {
     trainNetwork(&network, training, validation);
   }
 
-  printf("\n\n");
+  //printf("\n\n");
 
-  printAllW(&network);
+  //printAllW(&network);
 
   return 0;
 }
@@ -398,10 +398,10 @@ void trainNetwork(Network *network, Data *train, Data *test) {
   for (i = 0; i < train[0].size; ++i) {
     feedForward(network, train[i].Input);
     output = network->Layers[NETWORK_SIZE - 1].Neurons->Output;
-    //printf("Output: %1.25f\n", output);
+    printf("Output: %1.25f\n", output);
     err = pow((train[i].Output - network->Layers[NETWORK_SIZE - 1].Neurons->Output), 2);
     sum_err += err;
-    //printf("Error: %f\n", sum_err / (i+1));
+    printf("Error: %f\n", sum_err / (i+1));
     backPropagation(network, &(train[i].Output), network->size - 1);
   }
 }
