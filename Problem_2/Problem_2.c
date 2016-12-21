@@ -5,8 +5,8 @@
 #include <time.h>
 #include <math.h>
 
-#define WEIGHT_MAX 0.0001
-#define LEARNING_RATE 0.00001
+#define WEIGHT_MAX 1
+#define LEARNING_RATE 0.001
 #define THRESHOLD 0
 #define NETWORK_SIZE 4
 
@@ -85,7 +85,7 @@ double tanhDerivate(double input);
 
 void updateWeights(Network *network, double *delta, int index);
 
-void trainNetwork(Network *network, Data *train, Data *test);
+double trainNetwork(Network *network, Data *train, Data *test);
 
 void printAllW(Network* network);
 
@@ -93,12 +93,14 @@ void backPropagation_(Network *network, double output, int index);
 
 void updateWeights_(Network *network);
 
+void predict(Network* network, Data* test);
 
 int main(void) {
   Network network;
   int i;
-  int layers[NETWORK_SIZE] = {2, 3, 3, 1};
+  int layers[NETWORK_SIZE] = {2, 5, 5, 1};
   Data training[1000], test[1000], validation[1000];
+  double err = 1;
 
   srand((unsigned) time(NULL)); //Seed initialisation
 
@@ -110,7 +112,7 @@ int main(void) {
 
   parseFile("/home/gemini/TUM/CI/CI-Homework_2/Problem_2/testInput11A.txt", training, validation);
 
-  //normalizeData(training, validation);
+  normalizeData(training, validation);
 
   /*feedForward(&network, training[0].Input1, training[0].Input2);
   printf("%f\n",network.Layers[3].Neurons->Output);
@@ -123,10 +125,12 @@ int main(void) {
     printf("%f,%f,%1.0f\n", training[j].Input1,training[j].Input2,training[j].Class);
   }*/
 
-  for (i = 0; i < 10000000; ++i) {
-    printf("Epoch :%d\n", i + 1);
-    trainNetwork(&network, training, validation);
+  for (i = 0; i < 20 && err > 0.35; ++i) {
+    //printf("Epoch :%d\n", i + 1);
+    err = trainNetwork(&network, training, validation);
   }
+
+  predict(&network, validation);
 
   return 0;
 }
@@ -220,7 +224,7 @@ void createOutputLayer(Network *network) {
               NULL,
               &(network->Layers[network->size - 2]),
               network->Layers_Info[network->size - 1],
-              linearFunc, network->size - 1);
+              tanh, network->size - 1);
 }
 
 void createHiddenLayer(Network *network) {
@@ -264,7 +268,7 @@ double tanhFunc(double input) {
 }
 
 void normalizeData(Data *training, Data *test) {
-  double min1, max1, min2, max2, tmp;
+  double min1, max1, min2, max2;
   int j;
 
   min1 = minInData(training,1);
@@ -306,7 +310,7 @@ double maxInData(Data *data, int index) {
   for (i = 0; i < data[0].size; ++i) {
     if (data[i].Input1 > max1)
       max1 = data[i].Input1;
-    if (data[i].Input2 > max1)
+    if (data[i].Input2 > max2)
       max2 = data[i].Input2;
   }
 
@@ -410,20 +414,26 @@ void updateWeights(Network *network, double *delta, int index) {
   }
 }
 
-void trainNetwork(Network *network, Data *train, Data *test) {
+double trainNetwork(Network *network, Data *train, Data *test) {
   int i;
   double err = 0.0, sum_err = 0.0, output;
 
-  for (i = 0; i < 2; ++i) {
+  for (i = 0; i < train[0].size; ++i) {
     feedForward(network, train[i].Input1, train[i].Input2);
     output = network->Layers[NETWORK_SIZE - 1].Neurons->Output;
-    printf("Output: %1.25f\n", output);
+    //printf("Output: %1.25f\n", output);
     err = pow((train[i].Class - network->Layers[NETWORK_SIZE - 1].Neurons->Output), 2);
     sum_err += err;
-    printf("Error: %f\n", sum_err / (i+1));
+    //printf("Error: %f\n", sum_err / (i+1));
+
     backPropagation_(network, train[i].Class, network->size - 1);
     updateWeights_(network);
+
+    if (sum_err <= 0.35){
+      return sum_err;
+    }
   }
+  return sum_err;
 }
 
 void printAllW(Network* network){
@@ -444,25 +454,27 @@ void printAllW(Network* network){
 }
 
 void backPropagation_(Network *network, double output, int index){
-  int i, j, k, size_actual, size_next;
-  double sum = 0.0, weight_prev = 0.0, delta_prev = 0.0, output_neuron = 0.0, deriv = 0.0;
+  int i, j, k;
+  double sum = 0.0, weight_prev, delta_prev, output_neuron, deriv;
 
   /// Last layer
   if (index == NETWORK_SIZE-1){
-   network->Layers[index].Neurons[0].delta =  (2) * (output - network->Layers[index].Neurons[0].Output);
+    output_neuron = network->Layers[index].Neurons[0].Output;
+    deriv = (1 - pow(output_neuron,2.0));
+    network->Layers[index].Neurons[0].delta =  deriv * (2) * (output - network->Layers[index].Neurons[0].Output);
   }
   index -= 1;
   /// Hidden layers
   for (k = index; k > 0; --k) {
     for (i = 0; i < network->Layers_Info[k]; ++i) {
+      output_neuron = network->Layers[k].Neurons[i].Output;
+      deriv = (1 - pow(output_neuron,2.0));
       for (j = 0; j < network->Layers_Info[k + 1]; ++j) {
         weight_prev = network->Layers[k+1].Neurons[j].Weights[i];
         delta_prev = network->Layers[k+1].Neurons[j].delta;
-        sum += weight_prev * delta_prev;
+        sum += weight_prev * delta_prev * deriv;
       }
-      output_neuron = network->Layers[k].Neurons[i].Output;
-      deriv = (1 - pow(output_neuron,2.0));
-      network->Layers[k].Neurons[i].delta = sum * deriv;
+      network->Layers[k].Neurons[i].delta = sum;
       sum = 0.0;
     }
   }
@@ -477,14 +489,31 @@ void updateWeights_(Network *network){
   for (k = index; k > 0; --k) {
     for (i = 0; i < network->Layers_Info[k]; ++i) {
       for (j = 0; j < network->Layers[k - 1].size; ++j) {
-        if (j != network->Layers[k - 1].size-1) {
-          out = network->Layers[k].Neurons[j].Output;
-        } else{
-          out = 1;
-        }
+        out = network->Layers[k-1].Neurons[j].Output;
         delta = network->Layers[k].Neurons[i].delta;
         network->Layers[k].Neurons[i].Weights[j] += delta * out * LEARNING_RATE;
       }
     }
   }
+}
+
+void predict(Network* network, Data* test){
+  int i;
+  double output;
+
+  for (i = 0; i < test[0].size; ++i) {
+    feedForward(network, test[i].Input1, test[i].Input2);
+    if (network->Layers[network->size-1].Neurons[0].Output > 0)
+      network->Layers[network->size-1].Neurons[0].Output = 1;
+    else
+      network->Layers[network->size-1].Neurons[0].Output = -1;
+    output = network->Layers[NETWORK_SIZE - 1].Neurons->Output;
+    if (output == 1){
+      printf("Output: +%1.0f\n", output);
+    } else {
+      printf("Output: %1.0f\n", output);
+    }
+  }
+
+
 }

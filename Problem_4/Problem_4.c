@@ -6,7 +6,7 @@
 #include <math.h>
 
 #define WEIGHT_MAX 0.001
-#define LEARNING_RATE 0.000001
+#define LEARNING_RATE 0.0001
 #define THRESHOLD 0
 #define NETWORK_SIZE 6
 
@@ -33,6 +33,7 @@ struct Neuron {
   double *Weights;
   functionPtr Func;
   double Output;
+  double delta;
 };
 
 struct Data {
@@ -87,11 +88,19 @@ void trainNetwork(Network *network, Data *train, Data *test);
 
 void printAllW(Network* network);
 
+void backPropagation_(Network *network, double output, int index);
+
+void updateWeights_(Network *network);
+
+void printAllOut(Network* network);
+
+void predict(Network* network, Data* test);
+
 int main(void) {
   Network network;
   int i;
-  int layers[NETWORK_SIZE] = {1, 4, 4, 3, 3, 1};
-  Data training[1000], test[1000], validation[1000];
+  int layers[NETWORK_SIZE] = {1, 5, 5, 5, 3, 1};
+  Data training[1000], validation[1000];
 
   srand((unsigned) time(NULL)); //Seed initialisation
 
@@ -111,12 +120,15 @@ int main(void) {
 
   //printf("%f", training[0].Output - network.Layers[2].Neurons[2].Output);
 
-  for (i = 0; i < 10000; ++i) {
+  for (i = 0; i < 100000; ++i) {
     //printf("Epoch :%d\n", i + 1);
     trainNetwork(&network, training, validation);
   }
+  printf("\n\n");
 
-  //printf("\n\n");
+  //predict(&network, validation);
+
+  //printAllOut(&network);
 
   //printAllW(&network);
 
@@ -132,7 +144,7 @@ void parseFile(char *path, Data *training, Data *test) {
 
   if (file) {
     while (fgets(buff, size, (FILE *) file) != NULL) {
-      if (strcmp(buff, "0,0") == 0) {
+      if (strcmp(buff, "0,0\n") == 0) {
         flag = 1;
       } else {
         if (flag == 0) {
@@ -219,7 +231,7 @@ void createHiddenLayer(Network *network) {
                 &(network->Layers[i + 1]),
                 &(network->Layers[i - 1]),
                 network->Layers_Info[i],
-                tanhFunc, i);
+                tanh, i);
   }
 }
 
@@ -327,7 +339,7 @@ void computeLayer(Layer *layer, int index) {
     computeActivation(&(layer->Neurons[layer->size-1]),1.0);
   }
   for (i = 0; i < size; ++i) { /// For all neurons
-    for (j = 0; j <layer->Previous->size ; ++j) { /// For all neurons/weights
+    for (j = 0; j < layer->Previous->size ; ++j) { /// For all neurons/weights
       output = layer->Previous->Neurons[j].Output;
       weight = layer->Neurons[i].Weights[j];
       sum += weight * output;
@@ -402,10 +414,10 @@ void trainNetwork(Network *network, Data *train, Data *test) {
     err = pow((train[i].Output - network->Layers[NETWORK_SIZE - 1].Neurons->Output), 2);
     sum_err += err;
     printf("Error: %f\n", sum_err / (i+1));
-    backPropagation(network, &(train[i].Output), network->size - 1);
+    backPropagation_(network, train[i].Output, network->size - 1);
+    updateWeights_(network);
   }
 }
-
 
 void printAllW(Network* network){
   int i, j, k;
@@ -424,3 +436,65 @@ void printAllW(Network* network){
   }
 }
 
+void backPropagation_(Network *network, double output, int index){
+  int i, j, k;
+  double sum = 0.0, weight_prev, delta_prev, output_neuron, deriv;
+
+  /// Last layer
+  if (index == NETWORK_SIZE-1){
+    network->Layers[index].Neurons[0].delta = (2) * (output - network->Layers[index].Neurons[0].Output);
+  }
+  index -= 1;
+  /// Hidden layers
+  for (k = index; k >= 0; --k) {
+    for (i = 0; i < network->Layers_Info[k]; ++i) {
+      output_neuron = network->Layers[k].Neurons[i].Output;
+      deriv = (1 - pow(output_neuron,2.0));
+      for (j = 0; j < network->Layers_Info[k + 1]; ++j) {
+        weight_prev = network->Layers[k+1].Neurons[j].Weights[i];
+        delta_prev = network->Layers[k+1].Neurons[j].delta;
+        sum += weight_prev * delta_prev * deriv;
+      }
+      network->Layers[k].Neurons[i].delta = sum;
+      sum = 0.0;
+    }
+  }
+}
+
+void updateWeights_(Network *network){
+  int i, j, k, index;
+  double delta, out;
+
+  index = NETWORK_SIZE-1;
+
+  for (k = index; k > 0; --k) {
+    for (i = 0; i < network->Layers_Info[k]; ++i) {
+      for (j = 0; j < network->Layers[k - 1].size; ++j) {
+        out = network->Layers[k-1].Neurons[j].Output;
+        delta = network->Layers[k].Neurons[i].delta;
+        network->Layers[k].Neurons[i].Weights[j] += delta * out * LEARNING_RATE;
+      }
+    }
+  }
+}
+
+void printAllOut(Network* network){
+  int i, j, k;
+
+  for (int i = 0; i < NETWORK_SIZE-1; ++i) {
+    for (j = 0; j < network->Layers[i].size; ++j) {
+      printf("Layer %d, Neuron %d, Output: %f\n",i, j, network->Layers[i].Neurons[j].Output);
+    }
+  }
+}
+
+void predict(Network* network, Data* test){
+  int i;
+  double output;
+
+  for (i = 0; i < test[0].size; ++i) {
+    feedForward(network, test[i].Input);
+    output = network->Layers[NETWORK_SIZE - 1].Neurons->Output;
+    printf("Output: %1.25f\n", output);
+  }
+}
