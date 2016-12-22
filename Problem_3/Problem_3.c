@@ -268,7 +268,6 @@ double maxInData(Data *data) {
   return max;
 }
 
-
 void validateNeuron(Neuron *neuron, Data *test){
   int i;
 
