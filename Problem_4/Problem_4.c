@@ -5,10 +5,10 @@
 #include <time.h>
 #include <math.h>
 
-#define WEIGHT_MAX 0.001
-#define LEARNING_RATE 0.0001
+#define WEIGHT_MAX 0.0001
+#define LEARNING_RATE 0.01
 #define THRESHOLD 0
-#define NETWORK_SIZE 6
+#define NETWORK_SIZE 5
 
 typedef struct Neuron Neuron;
 typedef struct Data Data;
@@ -34,6 +34,7 @@ struct Neuron {
   functionPtr Func;
   double Output;
   double delta;
+  double *Update;
 };
 
 struct Data {
@@ -78,11 +79,11 @@ void computeLayer(Layer *layer, int index);
 
 double linearFunc(double input);
 
-void backPropagation(Network *network, double *output, int index);
+void backPropagation(Network *network, double output, int index);
 
 double tanhDerivate(double input);
 
-void updateWeights(Network *network, double *delta, int index);
+void updateWeights(Network *network, int index);
 
 void trainNetwork(Network *network, Data *train, Data *test);
 
@@ -96,10 +97,24 @@ void printAllOut(Network* network);
 
 void predict(Network* network, Data* test);
 
+void computeNetwork_(Network* network, double input);
+
+double sumPreviousNeuron(Layer* layer, Neuron* neuron);
+
+void backProb(Network* network, double output);
+
+void getDelta(Layer* layer, Neuron* neuron, int neuron_index, int layer_index);
+
+void updateW(Network* network);
+
+void getUpdate(Neuron* neuron, Layer* layer);
+
+void backProb_(Network* network, double output);
+
 int main(void) {
   Network network;
   int i;
-  int layers[NETWORK_SIZE] = {1, 5, 5, 5, 3, 1};
+  int layers[NETWORK_SIZE] = {1, 2, 2, 2, 1};
   Data training[1000], validation[1000];
 
   srand((unsigned) time(NULL)); //Seed initialisation
@@ -121,7 +136,7 @@ int main(void) {
   //printf("%f", training[0].Output - network.Layers[2].Neurons[2].Output);
 
   for (i = 0; i < 100000; ++i) {
-    //printf("Epoch :%d\n", i + 1);
+    printf("Epoch :%d\n", i + 1);
     trainNetwork(&network, training, validation);
   }
   printf("\n\n");
@@ -130,7 +145,7 @@ int main(void) {
 
   //printAllOut(&network);
 
-  //printAllW(&network);
+  printAllW(&network);
 
   return 0;
 }
@@ -198,7 +213,9 @@ void parseTestLine(char *line, Data *data) {
 void initialiseNeuron(Neuron *neuron, int nbrWeights, functionPtr func) {
   int i = 0;
   neuron->Output = 0;
+  neuron->delta = 0;
   neuron->Weights = (double *) malloc(sizeof(double) * nbrWeights);
+  neuron->Update = (double *) calloc(nbrWeights, sizeof(double));
   for (i = 0; i < nbrWeights; ++i) {
     neuron->Weights[i] = WEIGHT_MAX * ((double)rand()/(double)RAND_MAX - 0.5);
   }
@@ -316,14 +333,7 @@ double maxInData(Data *data) {
 }
 
 void feedForward(Network *network, double input) {
-  int i;
-  /// Input layer
-  computeActivation(&(network->Layers[0].Neurons[0]), input);
-  computeActivation(&(network->Layers[0].Neurons[1]), 1.0);
-  /// Hidden layer & output
-  for (i = 1; i < network->size; ++i) {
-    computeLayer(&(network->Layers[i]), i);
-  }
+  computeNetwork_(network,input);
 }
 
 void computeActivation(Neuron *neuron, double input) {
@@ -353,51 +363,43 @@ double linearFunc(double input) {
   return input;
 }
 
-void backPropagation(Network *network, double *output, int index) {
+void backPropagation(Network *network, double output, int index) {
   int i, j, size;
   double w_prev, delta_prev, deriv, sum = 0.0;
   double delta[network->Layers[index].size];
 
   if (index == NETWORK_SIZE-1){
-    delta[0] = (-2) * (*output - network->Layers[index].Neurons[0].Output);
+    network->Layers[index].Neurons[0].delta = (2) * (output - network->Layers[index].Neurons[0].Output);
   } else{
-    if(index == NETWORK_SIZE-2){
-      size = network->Layers[index+1].size;
-    } else{
-      size = network->Layers[index+1].size-1;
-    }
-    for (i = 0; i < network->Layers[index].size - 1; ++i) { /// Neurons current layer
-      for (j = 0; j < size; ++j) { /// Neurons following layer
-        delta_prev = output[j];
+    for (i = 0; i < network->Layers_Info[index]; ++i) { /// Neurons current layer
+      deriv = (1 - pow(network->Layers[index].Neurons[i].Output, 2));
+      for (j = 0; j < network->Layers_Info[index+1]; ++j) { /// Neurons following layer
+        delta_prev = network->Layers[index+1].Neurons[j].delta;
         w_prev = network->Layers[index+1].Neurons[j].Weights[i];
-        deriv = (1 - pow(network->Layers[index].Neurons[i].Output, 2));
         sum += delta_prev * w_prev * deriv;
       }
-      delta[i] = sum;
+      delta[i] += sum;
     }
   }
   if (index > 1){
-    backPropagation(network,delta,index-1);
+    backPropagation(network,0,index-1);
   }
-  updateWeights(network,delta,index);
+  updateWeights(network,index);
 }
 
 double tanhDerivate(double input) {
   return 1 - pow(tanh(input), 2);
 }
 
-void updateWeights(Network *network, double *delta, int index) {
+void updateWeights(Network *network, int index) {
   int i, j, size;
-  double output, weight_delta;
-  if(index == NETWORK_SIZE-1){
-    size = network->Layers[index].size;
-  } else{
-    size = network->Layers[index].size-1;
-  }
-  for (i = 0; i < size; ++i) {
+  double output, weight_delta, delta;
+
+  for (i = 0; i < network->Layers_Info[index]; ++i) {
     for (j = 0; j < network->Layers[index-1].size; ++j) {
       output = network->Layers[index-1].Neurons[j].Output;
-      weight_delta = (-1)*LEARNING_RATE * delta[i] * output;
+      delta = network->Layers[index].Neurons[i].delta;
+      weight_delta = LEARNING_RATE * delta * output;
       network->Layers[index].Neurons[i].Weights[j] += weight_delta;
     }
   }
@@ -413,10 +415,10 @@ void trainNetwork(Network *network, Data *train, Data *test) {
     printf("Output: %1.25f\n", output);
     err = pow((train[i].Output - network->Layers[NETWORK_SIZE - 1].Neurons->Output), 2);
     sum_err += err;
-    printf("Error: %f\n", sum_err / (i+1));
-    backPropagation_(network, train[i].Output, network->size - 1);
-    updateWeights_(network);
+    printf("Error: %f\n", sum_err/(i+1));
+    backProb_(network,train[i].Output);
   }
+  updateWeights_(network);
 }
 
 void printAllW(Network* network){
@@ -442,7 +444,7 @@ void backPropagation_(Network *network, double output, int index){
 
   /// Last layer
   if (index == NETWORK_SIZE-1){
-    network->Layers[index].Neurons[0].delta = (2) * (output - network->Layers[index].Neurons[0].Output);
+    network->Layers[index].Neurons[0].delta += (output - network->Layers[index].Neurons[0].Output);
   }
   index -= 1;
   /// Hidden layers
@@ -455,7 +457,7 @@ void backPropagation_(Network *network, double output, int index){
         delta_prev = network->Layers[k+1].Neurons[j].delta;
         sum += weight_prev * delta_prev * deriv;
       }
-      network->Layers[k].Neurons[i].delta = sum;
+      network->Layers[k].Neurons[i].delta += sum;
       sum = 0.0;
     }
   }
@@ -467,12 +469,13 @@ void updateWeights_(Network *network){
 
   index = NETWORK_SIZE-1;
 
-  for (k = index; k > 0; --k) {
+  for (k = 1; k < NETWORK_SIZE-1; ++k) {
     for (i = 0; i < network->Layers_Info[k]; ++i) {
       for (j = 0; j < network->Layers[k - 1].size; ++j) {
         out = network->Layers[k-1].Neurons[j].Output;
         delta = network->Layers[k].Neurons[i].delta;
         network->Layers[k].Neurons[i].Weights[j] += delta * out * LEARNING_RATE;
+        network->Layers[k].Neurons[i].delta = 0;
       }
     }
   }
@@ -497,4 +500,132 @@ void predict(Network* network, Data* test){
     output = network->Layers[NETWORK_SIZE - 1].Neurons->Output;
     printf("Output: %1.25f\n", output);
   }
+}
+
+void computeNetwork_(Network* network, double input){
+  double net;
+
+  computeActivation(&(network->Layers[0].Neurons[0]),input);
+  computeActivation(&(network->Layers[0].Neurons[1]),1.0);
+  for (int i = 1; i < network->size; ++i) {
+    for (int j = 0; j < network->Layers_Info[i]; ++j) {
+      net = sumPreviousNeuron(&(network->Layers[i]),&(network->Layers[i].Neurons[j]));
+      computeActivation(&(network->Layers[i].Neurons[j]),net);
+    }
+    if (i != NETWORK_SIZE-1) {
+      computeActivation(&(network->Layers[i].Neurons[network->Layers_Info[i]]), 1.0);
+    }
+  }
+}
+
+double sumPreviousNeuron(Layer* layer, Neuron* neuron){
+  double sum = 0.0;
+
+  for (int i = 0; i < layer->Previous->size; ++i) {
+    sum += neuron->Weights[i] * layer->Previous->Neurons[i].Output;
+  }
+  return sum;
+}
+
+void backProb(Network* network, double output){
+  double delta_prev, weight_prev, out_prev, deriv, sum =0.0, op;
+
+  network->Layers[NETWORK_SIZE-1].Neurons[0].delta += (output - network->Layers[NETWORK_SIZE-1].Neurons[0].Output);
+  for (int i = 0; i < network->Layers[NETWORK_SIZE-2].size; ++i) {
+    op = network->Layers[NETWORK_SIZE-1].Neurons[0].Update[i];
+    network->Layers[NETWORK_SIZE-1].Neurons[0].Update[i] += network->Layers[NETWORK_SIZE-1].Neurons[0].delta *  network->Layers[NETWORK_SIZE-2].Neurons[i].Output;
+    op = network->Layers[NETWORK_SIZE-1].Neurons[0].Update[i];
+  }
+
+  for (int j = network->size-2; j > 0; --j) {
+    for (int i = 0; i < network->Layers_Info[j]; ++i) {
+      deriv = (1 - pow(network->Layers[j].Neurons->Output,2.0));
+      for (int k = 0; k < network->Layers_Info[j+1]; ++k) {
+        delta_prev = network->Layers[j+1].Neurons[k].delta;
+        weight_prev = network->Layers[j+1].Neurons[k].Weights[i];
+        sum += delta_prev * weight_prev;
+      }
+      network->Layers[j].Neurons[i].delta += sum * deriv;
+      sum = 0.0;
+    }
+  }
+
+
+}
+
+void getDelta(Layer* layer, Neuron* neuron, int neuron_index, int layer_index){
+  double sum =0.0, delta, weight, deriv;
+  double size = layer->Next->size;
+
+  if (layer_index != NETWORK_SIZE - 2)
+    size -= 1;
+  deriv = (1-pow(neuron->Output,2.0));
+  for (int j = 0; j < size; ++j) {
+    delta = layer->Next->Neurons[j].delta;
+    weight = layer->Next->Neurons[j].Weights[neuron_index];
+    sum += delta * weight * deriv;
+  }
+  neuron->delta += sum;
+}
+
+void updateW(Network* network){
+  double  update;
+  for (int i = 1; i < network->size; ++i) {
+    for (int j = 0; j < network->Layers_Info[i]; ++j) {
+      for (int k = 0; k < network->Layers[i-1].size; ++k) {
+        network->Layers[i].Neurons[j].Update[k] += network->Layers[i].Neurons[j].delta * network->Layers[i-1].Neurons[k].Output;
+        update = network->Layers[i].Neurons[j].Update[k];
+        network->Layers[i].Neurons[j].Weights[k] += LEARNING_RATE * update;
+        network->Layers[i].Neurons[j].Update[k] = 0;
+      }
+    }
+  }
+  network->Layers[NETWORK_SIZE-1].Neurons[0].delta = 0;
+  for (int i = network->size-2 ; i > 0; --i) {
+    for (int j = 0; j < network->Layers_Info[i]; ++j) {
+      network->Layers[i].Neurons[j].delta = 0;
+    }
+  }
+  for (int i =  network->size; i > 0; --i) {
+    for (int j = 0; j < network->Layers_Info[i]; ++j) {
+      for (int k = 0; k < network->Layers[i-1].size; ++k) {
+        network->Layers[i].Neurons[j].Update[k] += network->Layers[i].Neurons[j].delta * network->Layers[i-1].Neurons[k].Output;
+        update = network->Layers[i].Neurons[j].Update[k];
+        network->Layers[i].Neurons[j].Weights[k] += LEARNING_RATE * update;
+        network->Layers[i].Neurons[j].Update[k] = 0;
+      }
+    }
+  }
+}
+
+void getUpdate(Neuron* neuron, Layer* layer){
+  double delta, output;
+  for (int i = 0; i < layer->Previous->size; ++i) {
+    delta = neuron->delta;
+    output = layer->Previous->Neurons[i].Output;
+    neuron->Update[i] +=  delta  * output;
+  }
+}
+
+void backProb_(Network* network, double output){
+  double sum = 0.0;
+  network->Layers[NETWORK_SIZE-1].Neurons[0].delta += (output - network->Layers[NETWORK_SIZE-1].Neurons[0].Output);
+  for (int i = network->size-2 ; i > 0; --i) {
+    for (int j = 0; j < network->Layers_Info[i]; ++j) {
+      for (int k = 0; k < network->Layers[i+1].size; ++k) {
+        sum += network->Layers[i+1].Neurons[k].delta * network->Layers[i+1].Neurons[k].Weights[j];
+      }
+      network->Layers[i].Neurons[j].delta += sum * (1-pow(network->Layers[i].Neurons[j].Output,2.0));
+      sum = 0.0;
+    }
+  }
+  for (int i = network->size-2 ; i > 0; --i) {
+    for (int j = 0; j < network->Layers_Info[i]; ++j) {
+      for (int k = 0; k < network->Layers[i-1].size; ++k) {
+        network->Layers[i].Neurons[j].Update[k] += network->Layers[i].Neurons[j].delta * network->Layers[i-1].Neurons[k].Output;
+      }
+    }
+  }
+
+
 }
